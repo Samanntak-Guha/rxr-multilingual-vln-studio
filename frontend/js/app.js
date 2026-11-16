@@ -395,17 +395,26 @@ function showToast(message, type = "info") {
     if (!container) return;
     const toast = document.createElement("div");
     const colors = {
-        info: "border-indigo-500/40 bg-slate-900/95 text-indigo-200",
-        success: "border-emerald-500/40 bg-slate-900/95 text-emerald-200",
-        warn: "border-amber-500/40 bg-slate-900/95 text-amber-200"
+        info: "border-[#55BFD0]/50 bg-[#24292B] text-[#F0EEE7]",
+        success: "border-[#72C9A2]/50 bg-[#24292B] text-[#F0EEE7]",
+        warning: "border-[#E5AD69]/50 bg-[#24292B] text-[#F0EEE7]",
+        warn: "border-[#E5AD69]/50 bg-[#24292B] text-[#F0EEE7]",
+        error: "border-[#D87979]/50 bg-[#24292B] text-[#F0EEE7]"
     };
-    toast.className = `px-4 py-2.5 rounded-xl border shadow-xl text-xs font-medium flex items-center gap-2 backdrop-blur-md transition-all duration-300 ${colors[type] || colors.info}`;
-    toast.innerHTML = `<i class="fa-solid fa-sparkles text-indigo-400"></i><span>${message}</span>`;
+    const icons = {
+        info: "fa-solid fa-circle-info text-[#55BFD0]",
+        success: "fa-solid fa-circle-check text-[#72C9A2]",
+        warning: "fa-solid fa-triangle-exclamation text-[#E5AD69]",
+        warn: "fa-solid fa-triangle-exclamation text-[#E5AD69]",
+        error: "fa-solid fa-circle-xmark text-[#D87979]"
+    };
+    toast.className = `px-4 py-2.5 rounded-lg border shadow-lg text-xs font-medium flex items-center gap-2.5 transition-all duration-300 ${colors[type] || colors.info}`;
+    toast.innerHTML = `<i class="${icons[type] || icons.info}"></i><span>${message}</span>`;
     container.appendChild(toast);
     setTimeout(() => {
         toast.style.opacity = "0";
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, 3200);
 }
 
 function updateMapSimStatusBadge() {
@@ -674,8 +683,8 @@ function switchMode(mode) {
             }
         }
 
-        simBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30";
-        editBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+        simBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-[#B8D96B] text-[#171A1C] shadow-sm";
+        editBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-[#A8ADA9] hover:text-[#F0EEE7]";
         simPanel.classList.remove("hidden");
         simPanel.classList.add("flex");
         editPanel.classList.add("hidden");
@@ -686,8 +695,8 @@ function switchMode(mode) {
         populateMapSelector();
         populateStartGoalDropdowns();
     } else {
-        editBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-emerald-600 text-white shadow-md shadow-emerald-600/30";
-        simBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white";
+        editBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-[#789C91] text-[#171A1C] shadow-sm";
+        simBtn.className = "px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-[#A8ADA9] hover:text-[#F0EEE7]";
         editPanel.classList.remove("hidden");
         editPanel.classList.add("flex");
         simPanel.classList.add("hidden");
@@ -709,9 +718,9 @@ function setLanguage(lang) {
         const btn = document.getElementById(`langBtn-${l}`);
         if (!btn) return;
         if (l === lang) {
-            btn.className = "px-2.5 py-1 rounded text-xs font-medium bg-indigo-600 text-white transition";
+            btn.className = "px-2.5 py-1 rounded text-xs font-semibold bg-[#B8D96B] text-[#171A1C] transition";
         } else {
-            btn.className = "px-2.5 py-1 rounded text-xs font-medium text-slate-400 hover:text-white transition";
+            btn.className = "px-2.5 py-1 rounded text-xs font-medium text-[#A8ADA9] hover:text-[#F0EEE7] transition";
         }
     });
 
@@ -1483,6 +1492,24 @@ function getLocalizedRoomName(room) {
 }
 
 /***********************************************************************
+ * ARCHITECTURAL 3D VIEWPORT COLOR SYSTEM (Design Tokens)
+ ***********************************************************************/
+const VIEWPORT_PALETTE = {
+    envBackground: 0x171C20,   // #171C20 Environment background
+    floor: 0xA9A69C,           // #A9A69C Floor
+    walls: 0xD8D4C9,           // #D8D4C9 Walls
+    ceiling: 0xEEECE5,         // #EEECE5 Ceiling
+    furniture: 0x647D75,       // #647D75 Furniture
+    selectedObject: 0xB8D96B,  // #B8D96B Selected object (Lime)
+    navigationPath: 0x55C6DC,  // #55C6DC Navigation path (Cyan)
+    agentPosition: 0xF0A45D,   // #F0A45D Agent position (Amber)
+    waypoints: 0x72D6B1,       // #72D6B1 Waypoints (Mint)
+    fovCone: 0x66B9D0,         // #66B9D0 FOV visualization
+    graphEdges: 0x82909B,      // #82909B Graph edges
+    gridGuides: 0x59636B       // #59636B Grid and guides
+};
+
+/***********************************************************************
  * 7. ACTUAL 3D MATTERPORT PANORAMA & DOLLHOUSE ENGINE (OPTIMIZED)
  ***********************************************************************/
 function initThreeMatterportEngine() {
@@ -1495,22 +1522,22 @@ function initThreeMatterportEngine() {
     const h = (stage && stage.clientHeight > 50) ? stage.clientHeight : ((wrapper && wrapper.clientHeight > 50) ? wrapper.clientHeight : 500);
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0b1329);
-    scene.fog = new THREE.FogExp2(0x0b1329, 0.007);
+    scene.background = new THREE.Color(VIEWPORT_PALETTE.envBackground);
+    scene.fog = new THREE.FogExp2(VIEWPORT_PALETTE.envBackground, 0.007);
 
     const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 140);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
 
-    const ambientLight = new THREE.AmbientLight(0xdbeafe, 1.1);
+    const ambientLight = new THREE.AmbientLight(0xf0eee7, 1.15);
     scene.add(ambientLight);
 
-    const dirLight1 = new THREE.DirectionalLight(0x38bdf8, 0.75);
+    const dirLight1 = new THREE.DirectionalLight(0xdfe6dc, 0.75);
     dirLight1.position.set(16, 26, 14);
     scene.add(dirLight1);
 
-    const fillLight = new THREE.DirectionalLight(0x818cf8, 0.45);
+    const fillLight = new THREE.DirectionalLight(0xa8ada9, 0.45);
     fillLight.position.set(-16, 20, -14);
     scene.add(fillLight);
 
@@ -1594,10 +1621,10 @@ function rebuild3DMatterportScene() {
 
     // 1. Lightweight Global Ground Grid
     if (showGrid) {
-        const globalGrid = new THREE.GridHelper(44, 24, 0x38bdf8, 0x1e293b);
+        const globalGrid = new THREE.GridHelper(44, 24, VIEWPORT_PALETTE.gridGuides, 0x24292B);
         globalGrid.position.y = -0.02;
         globalGrid.material.transparent = true;
-        globalGrid.material.opacity = 0.4;
+        globalGrid.material.opacity = 0.55;
         threeState.worldGroup.add(globalGrid);
     }
 
@@ -1614,12 +1641,14 @@ function rebuild3DMatterportScene() {
         const isGoalRoom = map.nodes.some(n => n.id === agentState.goalNodeId && n.roomId === room.id);
         const roomHex = new THREE.Color(room.color || "#6366f1");
 
-        // 2A. Interactive Floor Plate
+        // 2A. Interactive Floor Plate (Architectural Palette)
+        const floorBase = new THREE.Color(VIEWPORT_PALETTE.floor);
+        const floorColor = floorBase.clone().lerp(roomHex, 0.22);
         const floorGeo = new THREE.PlaneGeometry(w3D, d3D);
         const floorMat = new THREE.MeshBasicMaterial({
-            color: roomHex,
+            color: floorColor,
             transparent: true,
-            opacity: isGoalRoom ? 0.28 : 0.14,
+            opacity: isGoalRoom ? 0.36 : 0.22,
             side: THREE.DoubleSide,
             depthWrite: false
         });
@@ -1629,7 +1658,7 @@ function rebuild3DMatterportScene() {
         floorMesh.userData = { roomId: room.id };
         roomGroup.add(floorMesh);
         threeState.clickableHotspots.push(floorMesh);
-        threeState.roomFloorsById[room.id] = { mat: floorMat, baseColor: roomHex };
+        threeState.roomFloorsById[room.id] = { mat: floorMat, baseColor: floorColor };
 
         // 2B. Optimized Architectural Grid Lines
         if (showGrid) {
@@ -1637,10 +1666,11 @@ function rebuild3DMatterportScene() {
             roomGroup.add(roomGrid);
         }
 
-        // 2C. Fast Lambert Transparent 3D Room Enclosure
+        // 2C. Fast Lambert Transparent 3D Room Enclosure (Architectural Walls)
         const boxGeo = new THREE.BoxGeometry(w3D, h3D, d3D);
+        const wallColor = new THREE.Color(VIEWPORT_PALETTE.walls).lerp(roomHex, 0.15);
         const wallMat = new THREE.MeshLambertMaterial({
-            color: roomHex,
+            color: wallColor,
             transparent: true,
             opacity: threeState.wallOpacity,
             side: THREE.DoubleSide,
@@ -1651,12 +1681,12 @@ function rebuild3DMatterportScene() {
         boxMesh.position.y = h3D / 2;
         roomGroup.add(boxMesh);
 
-        // Neon Wireframe Perimeter Cage
+        // Architectural Wireframe Perimeter Cage
         const edgesGeo = new THREE.EdgesGeometry(boxGeo);
         const edgesMat = new THREE.LineBasicMaterial({
-            color: isGoalRoom ? 0x10b981 : roomHex,
+            color: isGoalRoom ? VIEWPORT_PALETTE.waypoints : VIEWPORT_PALETTE.gridGuides,
             transparent: true,
-            opacity: 0.9
+            opacity: 0.85
         });
         const wireframeCage = new THREE.LineSegments(edgesGeo, edgesMat);
         wireframeCage.position.y = h3D / 2;
@@ -1703,9 +1733,9 @@ function rebuild3DMatterportScene() {
         const pts = [new THREE.Vector3(p1.x, 0.08, p1.z), new THREE.Vector3(p2.x, 0.08, p2.z)];
         const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
         const lineMat = new THREE.LineBasicMaterial({
-            color: 0x64748b,
+            color: VIEWPORT_PALETTE.graphEdges,
             transparent: true,
-            opacity: 0.55
+            opacity: 0.65
         });
         const line = new THREE.Line(lineGeo, lineMat);
         threeState.worldGroup.add(line);
@@ -1810,7 +1840,7 @@ function rebuild3DMatterportScene() {
 
         const ringGeo = new THREE.RingGeometry(0.30, 0.44, 16);
         const ringMat = new THREE.MeshBasicMaterial({
-            color: 0x94a3b8,
+            color: VIEWPORT_PALETTE.waypoints,
             side: THREE.DoubleSide,
             transparent: true,
             opacity: 0.92
@@ -1821,7 +1851,7 @@ function rebuild3DMatterportScene() {
 
         const cylGeo = new THREE.CylinderGeometry(0.30, 0.30, 0.5, 12, 1, true);
         const cylMat = new THREE.MeshBasicMaterial({
-            color: 0x94a3b8,
+            color: VIEWPORT_PALETTE.waypoints,
             transparent: true,
             opacity: 0.24,
             side: THREE.DoubleSide,
@@ -1850,10 +1880,10 @@ function rebuild3DMatterportScene() {
         });
     });
 
-    // 5. 3D Agent Avatar & Heading Frustum Cone
+    // 5. 3D Agent Avatar & Heading Frustum Cone (Architectural Palette)
     const agentGroup = new THREE.Group();
     const bodyGeo = new THREE.CylinderGeometry(0.22, 0.28, 1.35, 10);
-    const bodyMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.6, wireframe: true });
+    const bodyMat = new THREE.MeshBasicMaterial({ color: VIEWPORT_PALETTE.agentPosition, transparent: true, opacity: 0.7, wireframe: true });
     const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
     bodyMesh.position.y = 0.7;
     agentGroup.add(bodyMesh);
@@ -1861,7 +1891,7 @@ function rebuild3DMatterportScene() {
     const coneGeo = new THREE.ConeGeometry(0.55, 1.4, 4);
     coneGeo.rotateX(Math.PI / 2);
     const coneEdges = new THREE.EdgesGeometry(coneGeo);
-    const coneLine = new THREE.LineSegments(coneEdges, new THREE.LineBasicMaterial({ color: 0x22d3ee }));
+    const coneLine = new THREE.LineSegments(coneEdges, new THREE.LineBasicMaterial({ color: VIEWPORT_PALETTE.fovCone }));
     coneLine.position.set(0, 1.35, 0.7);
     agentGroup.add(coneLine);
 
@@ -1887,10 +1917,10 @@ function update3DTrajectoryAndHighlights() {
         const isStart = node.id === agentState.startNodeId;
         const isGoal = node.id === agentState.goalNodeId;
         const isCurrent = node.id === agentState.currentNodeId;
-        const hex = isGoal ? 0x10b981 : (isCurrent ? 0x22d3ee : (isStart ? 0x6366f1 : 0x94a3b8));
+        const hex = isGoal ? VIEWPORT_PALETTE.waypoints : (isCurrent ? VIEWPORT_PALETTE.agentPosition : (isStart ? VIEWPORT_PALETTE.navigationPath : VIEWPORT_PALETTE.graphEdges));
         refs.ringMat.color.setHex(hex);
         refs.cylMat.color.setHex(hex);
-        refs.cylMat.opacity = isCurrent ? 0.42 : 0.2;
+        refs.cylMat.opacity = isCurrent ? 0.45 : 0.22;
     });
 
     map.rooms.forEach(room => {
@@ -1898,7 +1928,7 @@ function update3DTrajectoryAndHighlights() {
         if (!floorRef) return;
         const isActiveRoom = room.id === activeRoomId;
         const isGoalRoom = map.nodes.some(n => n.id === agentState.goalNodeId && n.roomId === room.id);
-        floorRef.mat.opacity = isActiveRoom ? 0.34 : (isGoalRoom ? 0.24 : 0.12);
+        floorRef.mat.opacity = isActiveRoom ? 0.38 : (isGoalRoom ? 0.28 : 0.16);
     });
 
     if (agentState.executedNodes.length > 1) {
@@ -1913,7 +1943,7 @@ function update3DTrajectoryAndHighlights() {
         if (pathPts.length > 1) {
             const curve = new THREE.CatmullRomCurve3(pathPts);
             const tubeGeo = new THREE.TubeGeometry(curve, pathPts.length * 6, 0.065, 6, false);
-            const tubeMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24 });
+            const tubeMat = new THREE.MeshBasicMaterial({ color: VIEWPORT_PALETTE.navigationPath });
             const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
             threeState.dynamicTrajectoryGroup.add(tubeMesh);
         }
@@ -2097,12 +2127,12 @@ function createProcedural3DLandmark(name, roomColor, index, total, roomW, roomD)
     const group = new THREE.Group();
     const lower = name.toLowerCase();
 
-    function addPart(w, h, d, x, y, z, hexColor = 0x22d3ee) {
+    function addPart(w, h, d, x, y, z, hexColor = VIEWPORT_PALETTE.furniture) {
         const geo = new THREE.BoxGeometry(w, h, d);
         const mat = new THREE.MeshBasicMaterial({
             color: hexColor,
             transparent: true,
-            opacity: 0.20,
+            opacity: 0.28,
             depthWrite: false
         });
         const mesh = new THREE.Mesh(geo, mat);
@@ -2113,7 +2143,7 @@ function createProcedural3DLandmark(name, roomColor, index, total, roomW, roomD)
         const wireMat = new THREE.LineBasicMaterial({
             color: hexColor,
             transparent: true,
-            opacity: 0.82
+            opacity: 0.85
         });
         const wire = new THREE.LineSegments(edgeGeo, wireMat);
         wire.position.set(x, y, z);
@@ -2121,35 +2151,35 @@ function createProcedural3DLandmark(name, roomColor, index, total, roomW, roomD)
     }
 
     if (lower.includes("sofa") || lower.includes("couch")) {
-        addPart(1.7, 0.42, 0.75, 0, 0.21, 0, 0x38bdf8);
-        addPart(1.7, 0.55, 0.2, 0, 0.65, -0.28, 0x38bdf8);
-        addPart(0.22, 0.48, 0.75, -0.75, 0.45, 0, 0x38bdf8);
-        addPart(0.22, 0.48, 0.75, 0.75, 0.45, 0, 0x38bdf8);
+        addPart(1.7, 0.42, 0.75, 0, 0.21, 0, VIEWPORT_PALETTE.furniture);
+        addPart(1.7, 0.55, 0.2, 0, 0.65, -0.28, VIEWPORT_PALETTE.furniture);
+        addPart(0.22, 0.48, 0.75, -0.75, 0.45, 0, VIEWPORT_PALETTE.furniture);
+        addPart(0.22, 0.48, 0.75, 0.75, 0.45, 0, VIEWPORT_PALETTE.furniture);
         group.userData.labelHeight = 1.25;
     } else if (lower.includes("bed")) {
-        addPart(1.65, 0.45, 1.9, 0, 0.225, 0, 0xf472b6);
-        addPart(1.65, 1.05, 0.16, 0, 0.525, -0.88, 0xf472b6);
-        addPart(0.55, 0.14, 0.35, -0.38, 0.52, -0.6, 0xffffff);
-        addPart(0.55, 0.14, 0.35, 0.38, 0.52, -0.6, 0xffffff);
+        addPart(1.65, 0.45, 1.9, 0, 0.225, 0, 0x789c91);
+        addPart(1.65, 1.05, 0.16, 0, 0.525, -0.88, 0x789c91);
+        addPart(0.55, 0.14, 0.35, -0.38, 0.52, -0.6, 0xd8d4c9);
+        addPart(0.55, 0.14, 0.35, 0.38, 0.52, -0.6, 0xd8d4c9);
         group.userData.labelHeight = 1.35;
     } else if (lower.includes("fridge") || lower.includes("wardrobe") || lower.includes("bookshelf") || lower.includes("cluster")) {
-        addPart(0.85, 1.85, 0.65, 0, 0.925, 0, 0x34d399);
-        addPart(0.87, 0.04, 0.67, 0, 0.6, 0, 0xa7f3d0);
-        addPart(0.87, 0.04, 0.67, 0, 1.2, 0, 0xa7f3d0);
+        addPart(0.85, 1.85, 0.65, 0, 0.925, 0, VIEWPORT_PALETTE.furniture);
+        addPart(0.87, 0.04, 0.67, 0, 0.6, 0, 0x82909b);
+        addPart(0.87, 0.04, 0.67, 0, 1.2, 0, 0x82909b);
         group.userData.labelHeight = 2.1;
     } else if (lower.includes("table") || lower.includes("desk") || lower.includes("counter") || lower.includes("island")) {
-        addPart(1.45, 0.1, 0.85, 0, 0.75, 0, 0xfbbf24);
-        addPart(0.1, 0.75, 0.1, -0.62, 0.375, -0.34, 0xfbbf24);
-        addPart(0.1, 0.75, 0.1, 0.62, 0.375, -0.34, 0xfbbf24);
-        addPart(0.1, 0.75, 0.1, -0.62, 0.375, 0.34, 0xfbbf24);
-        addPart(0.1, 0.75, 0.1, 0.62, 0.375, 0.34, 0xfbbf24);
+        addPart(1.45, 0.1, 0.85, 0, 0.75, 0, 0x789c91);
+        addPart(0.1, 0.75, 0.1, -0.62, 0.375, -0.34, 0x59636b);
+        addPart(0.1, 0.75, 0.1, 0.62, 0.375, -0.34, 0x59636b);
+        addPart(0.1, 0.75, 0.1, -0.62, 0.375, 0.34, 0x59636b);
+        addPart(0.1, 0.75, 0.1, 0.62, 0.375, 0.34, 0x59636b);
         group.userData.labelHeight = 1.15;
     } else if (lower.includes("tv") || lower.includes("screen") || lower.includes("whiteboard") || lower.includes("painting")) {
-        addPart(1.4, 0.82, 0.08, 0, 1.35, 0, 0x818cf8);
-        addPart(0.5, 0.55, 0.3, 0, 0.275, 0, 0x6366f1);
+        addPart(1.4, 0.82, 0.08, 0, 1.35, 0, 0x55bfd0);
+        addPart(0.5, 0.55, 0.3, 0, 0.275, 0, 0x2b3234);
         group.userData.labelHeight = 1.95;
     } else {
-        addPart(0.7, 0.85, 0.7, 0, 0.425, 0, 0x22d3ee);
+        addPart(0.7, 0.85, 0.7, 0, 0.425, 0, VIEWPORT_PALETTE.furniture);
         group.userData.labelHeight = 1.2;
     }
 
@@ -2213,11 +2243,11 @@ function set3DCameraMode(mode) {
     const wrap2D = document.getElementById("canvasWrapper");
     const hint = document.getElementById("hud3DHint");
 
-    const activeSidebarCls = "py-2 px-2 rounded-lg bg-cyan-500/20 border border-cyan-500/50 text-cyan-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition";
-    const inactiveSidebarCls = "py-2 px-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition";
+    const activeSidebarCls = "py-2 px-2 rounded-lg bg-[#2B3234] border border-[#55BFD0] text-[#55BFD0] text-xs font-semibold flex items-center justify-center gap-1.5 transition";
+    const inactiveSidebarCls = "py-2 px-2 rounded-lg bg-[#1E2325] border border-[#394144] text-[#A8ADA9] hover:text-[#F0EEE7] text-xs font-semibold flex items-center justify-center gap-1.5 transition";
 
-    const activeHudCls = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 text-slate-950 shadow-md flex items-center gap-1.5 transition";
-    const inactiveHudCls = "px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 transition";
+    const activeHudCls = "px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#55BFD0] text-[#171A1C] shadow-sm flex items-center gap-1.5 transition";
+    const inactiveHudCls = "px-3 py-1.5 rounded-lg text-xs font-semibold text-[#A8ADA9] hover:text-[#F0EEE7] flex items-center gap-1.5 transition";
 
     ["panorama", "dollhouse", "map2d"].forEach(m => {
         const sBtn = document.getElementById(`camBtn-${m}`);
@@ -2736,9 +2766,9 @@ function setEditorTool(tool) {
         const btn = document.getElementById(`toolBtn-${t}`);
         if (!btn) return;
         if (t === tool) {
-            btn.className = "p-2 rounded-xl border border-indigo-500 bg-indigo-600/20 text-white text-xs font-medium flex flex-col items-center gap-1 transition";
+            btn.className = "p-2 rounded-xl border border-[#B8D96B] bg-[rgba(184,217,107,0.14)] text-[#F0EEE7] text-xs font-semibold flex flex-col items-center gap-1 transition";
         } else {
-            btn.className = "p-2 rounded-xl border border-slate-700 bg-slate-900/70 text-slate-300 hover:text-white text-xs font-medium flex flex-col items-center gap-1 transition";
+            btn.className = "p-2 rounded-xl border border-[#394144] bg-[#1E2325] text-[#A8ADA9] hover:text-[#F0EEE7] text-xs font-medium flex flex-col items-center gap-1 transition";
         }
     });
 
@@ -3412,9 +3442,9 @@ function setEditorElementsTab(tab) {
         const btn = document.getElementById(`elemTab-${t}`);
         if (btn) {
             if (t === tab) {
-                btn.className = "py-1 px-1.5 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white transition flex items-center justify-center gap-1 shadow";
+                btn.className = "py-1 px-1.5 rounded-lg text-[11px] font-semibold bg-[#B8D96B] text-[#171A1C] transition flex items-center justify-center gap-1 shadow-sm";
             } else {
-                btn.className = "py-1 px-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1";
+                btn.className = "py-1 px-1.5 rounded-lg text-[11px] font-semibold text-[#A8ADA9] hover:text-[#F0EEE7] transition flex items-center justify-center gap-1";
             }
         }
     });

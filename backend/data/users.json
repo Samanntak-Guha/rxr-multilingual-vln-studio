@@ -1,0 +1,18 @@
+{
+  "researcher@rxr.studio": {
+    "id": "usr_41ac86e97cb0",
+    "email": "researcher@rxr.studio",
+    "name": "VLN Researcher",
+    "salt": "12fd1e1390df86357469091a579a37df",
+    "passwordHash": "1b854f72d6496e99f3d56a2f19d88858e7806834a6f653d07c9dd2ee71fea61a34fc6855673b809766db515c189716b388cf6f1103552ef834cc84dbf0322554",
+    "createdAt": "2026-11-16T15:48:53.112Z"
+  },
+  "samanntakguha2007@gmail.com": {
+    "id": "usr_79e1ecb4479e",
+    "email": "samanntakguha2007@gmail.com",
+    "name": "Samanntak Guha",
+    "salt": "4ac834138c42a17fca130fbbaa5bb1e9",
+    "passwordHash": "a7bc663f23c41f40b31713fb498b288e4cfc64c6379d0dc44842a87132cdcfa0afd90d899f76011da729158082c6bb215485b50895d5d26ee01ef2c7b0ea1584",
+    "createdAt": "2026-11-16T16:18:32.546Z"
+  }
+}

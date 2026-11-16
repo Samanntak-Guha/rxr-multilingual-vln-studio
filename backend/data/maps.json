@@ -1119,5 +1119,196 @@
         }
       ]
     }
+  },
+  "custom_map_3692": {
+    "id": "custom_map_3692",
+    "name": "MY MAP 1",
+    "rooms": [
+      {
+        "id": "r_custom_3900",
+        "name": "Nice room",
+        "x": 384,
+        "y": 185,
+        "w": 170,
+        "h": 130,
+        "color": "#6366f1",
+        "landmarks": [
+          "Monitor",
+          "Table"
+        ]
+      },
+      {
+        "id": "r_custom_1540",
+        "name": "Bathroom",
+        "x": 566,
+        "y": 185,
+        "w": 170,
+        "h": 130,
+        "color": "#06b6d4",
+        "landmarks": [
+          "Bed",
+          "Table"
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "vp_1",
+        "x": 469,
+        "y": 250,
+        "roomId": "r_custom_3900",
+        "label": "Nice room Center"
+      },
+      {
+        "id": "vp_2",
+        "x": 658,
+        "y": 248,
+        "roomId": "r_custom_1540",
+        "label": "Bathroom Center"
+      }
+    ],
+    "edges": [
+      [
+        "vp_1",
+        "vp_2"
+      ]
+    ],
+    "presets": {
+      "en": [
+        {
+          "title": "Nice room → Nice room",
+          "text": "Start in the Nice room, follow the pathway through the hallway, and reach the Nice room.",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ],
+      "hi": [
+        {
+          "title": "Nice room → Nice room",
+          "text": "Nice room से शुरू करें और Nice room में जाएं।",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ],
+      "te": [
+        {
+          "title": "Nice room → Nice room",
+          "text": "Nice room నుండి Nice roomకి వెళ్లండి.",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ]
+    },
+    "addedToSimulator": true
+  },
+  "custom_map_0700": {
+    "id": "custom_map_0700",
+    "name": "HOME",
+    "rooms": [
+      {
+        "id": "r_custom_8787",
+        "name": "Bedroom 1",
+        "x": 61,
+        "y": 119,
+        "w": 170,
+        "h": 130,
+        "color": "#72C9A2",
+        "landmarks": [
+          "3D Printer",
+          "Table",
+          "Fridge"
+        ]
+      },
+      {
+        "id": "r_custom_0700",
+        "name": "Kitchen",
+        "x": 59,
+        "y": 251,
+        "w": 170,
+        "h": 200,
+        "color": "#D87979",
+        "landmarks": [
+          "Monitor",
+          "Table",
+          "Bed"
+        ]
+      },
+      {
+        "id": "r_custom_9188",
+        "name": "Hallway",
+        "x": 232,
+        "y": 161,
+        "w": 300,
+        "h": 200,
+        "color": "#B8D96B",
+        "landmarks": [
+          "Staircase"
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "vp_1",
+        "x": 153,
+        "y": 185,
+        "roomId": "r_custom_8787",
+        "label": "Bedroom 1 Node"
+      },
+      {
+        "id": "vp_2",
+        "x": 375,
+        "y": 255,
+        "roomId": "r_custom_9188",
+        "label": "Hallway Node"
+      },
+      {
+        "id": "vp_3",
+        "x": 155,
+        "y": 359,
+        "roomId": "r_custom_0700",
+        "label": "Kitchen Node"
+      }
+    ],
+    "edges": [
+      [
+        "vp_1",
+        "vp_2"
+      ],
+      [
+        "vp_1",
+        "vp_3"
+      ],
+      [
+        "vp_2",
+        "vp_3"
+      ]
+    ],
+    "presets": {
+      "en": [
+        {
+          "title": "Bedroom 1 → Bedroom 1",
+          "text": "Start in the Bedroom 1, follow the pathway through the hallway, and reach the Bedroom 1.",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ],
+      "hi": [
+        {
+          "title": "Bedroom 1 → Bedroom 1",
+          "text": "Bedroom 1 से शुरू करें और Bedroom 1 में जाएं।",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ],
+      "te": [
+        {
+          "title": "Bedroom 1 → Bedroom 1",
+          "text": "Bedroom 1 నుండి Bedroom 1కి వెళ్లండి.",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ]
+    },
+    "addedToSimulator": true
   }
 }

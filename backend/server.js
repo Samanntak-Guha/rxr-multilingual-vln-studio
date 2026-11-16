@@ -7,6 +7,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const url = require('node:url');
+const auth = require('./auth.js');
 
 const BACKEND_DIR = __dirname;
 const ROOT_DIR = path.resolve(BACKEND_DIR, '..');
@@ -127,6 +128,19 @@ const server = http.createServer((req, res) => {
         return;
     }
 
+    if (pathname === '/api/auth/me' && req.method === 'GET') {
+        const token = auth.extractToken(req);
+        const user = auth.verifyToken(token);
+        if (user) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ authenticated: true, user }));
+        } else {
+            res.writeHead(401, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ authenticated: false, error: 'Unauthorized or expired session.' }));
+        }
+        return;
+    }
+
     if (pathname === '/api/maps' && req.method === 'GET') {
         const maps = loadMaps();
         res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -183,6 +197,28 @@ const server = http.createServer((req, res) => {
                 const result = computeShortestPath(body.nodes || [], body.edges || [], body.start, body.goal);
                 res.writeHead(200, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ planned_path: result }));
+                return;
+            }
+
+            if (pathname === '/api/auth/register' && req.method === 'POST') {
+                const regResult = auth.registerUser(body.email, body.password, body.name);
+                res.writeHead(regResult.success ? 201 : 400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(regResult));
+                return;
+            }
+
+            if (pathname === '/api/auth/login' && req.method === 'POST') {
+                const loginResult = auth.loginUser(body.email, body.password);
+                res.writeHead(loginResult.success ? 200 : 401, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify(loginResult));
+                return;
+            }
+
+            if (pathname === '/api/auth/logout' && req.method === 'POST') {
+                const token = auth.extractToken(req) || body.token;
+                auth.logoutUser(token);
+                res.writeHead(200, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: true, message: 'Logged out successfully.' }));
                 return;
             }
 

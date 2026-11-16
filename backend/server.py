@@ -11,6 +11,7 @@ import math
 import mimetypes
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
+import auth
 
 # Path resolution
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -124,6 +125,17 @@ class StudioHTTPRequestHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(data).encode("utf-8"))
             return
 
+        if path == "/api/auth/me":
+            token = auth.extract_token_from_headers(self.headers)
+            user = auth.verify_token(token)
+            if user:
+                self._set_headers(200)
+                self.wfile.write(json.dumps({"authenticated": True, "user": user}).encode("utf-8"))
+            else:
+                self._set_headers(401)
+                self.wfile.write(json.dumps({"authenticated": False, "error": "Unauthorized or expired session"}).encode("utf-8"))
+            return
+
         if path == "/api/maps":
             maps = load_maps_from_disk()
             self._set_headers(200)
@@ -163,9 +175,14 @@ class StudioHTTPRequestHandler(BaseHTTPRequestHandler):
                 content = f.read()
             self._set_headers(200, mime_type)
             self.wfile.write(content)
+        except (ConnectionResetError, ConnectionAbortedError, BrokenPipeError):
+            pass
         except Exception as e:
-            self._set_headers(500, "text/plain")
-            self.wfile.write(f"500 Internal Server Error: {e}".encode("utf-8"))
+            try:
+                self._set_headers(500, "text/plain")
+                self.wfile.write(f"500 Internal Server Error: {e}".encode("utf-8"))
+            except Exception:
+                pass
 
     def do_POST(self):
         parsed = urlparse(self.path)
@@ -192,6 +209,27 @@ class StudioHTTPRequestHandler(BaseHTTPRequestHandler):
             path_result = compute_shortest_path(nodes, edges, start_id, goal_id)
             self._set_headers(200)
             self.wfile.write(json.dumps({"planned_path": path_result}).encode("utf-8"))
+            return
+
+        if path == "/api/auth/register":
+            reg_result = auth.register_user(body.get("email"), body.get("password"), body.get("name", ""))
+            status = 201 if reg_result.get("success") else 400
+            self._set_headers(status)
+            self.wfile.write(json.dumps(reg_result).encode("utf-8"))
+            return
+
+        if path == "/api/auth/login":
+            login_result = auth.login_user(body.get("email"), body.get("password"))
+            status = 200 if login_result.get("success") else 401
+            self._set_headers(status)
+            self.wfile.write(json.dumps(login_result).encode("utf-8"))
+            return
+
+        if path == "/api/auth/logout":
+            token = auth.extract_token_from_headers(self.headers) or body.get("token")
+            auth.logout_user(token)
+            self._set_headers(200)
+            self.wfile.write(json.dumps({"success": True, "message": "Logged out successfully"}).encode("utf-8"))
             return
 
         self._set_headers(404)

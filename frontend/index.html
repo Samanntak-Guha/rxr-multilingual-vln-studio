@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RxR Multilingual VLN Agent — Custom Map & Room Studio</title>
+    <title>RxR Multilingual VLN Studio — Embodied Spatial AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,10 +19,23 @@
                         mono: ['JetBrains Mono', 'monospace'],
                     },
                     colors: {
-                        slate: {
-                            850: '#151e32',
-                            900: '#0f172a',
-                            950: '#080c17',
+                        graphite: {
+                            800: '#1E2325',
+                            850: '#1b2022',
+                            900: '#171A1C',
+                            950: '#121516',
+                        },
+                        architect: {
+                            panel: '#24292B',
+                            elevated: '#2B3234',
+                            border: '#394144',
+                            borderStrong: '#4a5458',
+                            lime: '#B8D96B',
+                            sage: '#789C91',
+                            cyan: '#55BFD0',
+                            mint: '#72C9A2',
+                            amber: '#E5AD69',
+                            coral: '#D87979',
                         }
                     }
                 }
@@ -30,639 +43,1297 @@
         }
     </script>
 </head>
-<body class="min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+<body class="min-h-screen flex flex-col font-sans antialiased text-[#F0EEE7] bg-[#171A1C]">
+
+    <!-- Ambient Atmospheric Light Leak Background -->
+    <div class="ambient-light-container" aria-hidden="true">
+        <div class="light-leak light-leak-1"></div>
+        <div class="light-leak light-leak-2"></div>
+        <div class="light-leak light-leak-3"></div>
+    </div>
+
+    <!-- Cursor Ambient Light Bubble -->
+    <div id="cursorAmbientBubble" class="cursor-ambient-bubble" aria-hidden="true"></div>
 
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- Top Navigation Bar -->
-    <header class="glass-panel sticky top-0 z-30 border-b border-slate-800/80 px-4 lg:px-6 py-3">
-        <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-4">
-            <!-- Brand Title -->
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
-                    <i class="fa-solid fa-compass-drafting text-white text-lg"></i>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="font-bold text-base sm:text-lg tracking-tight text-white">RxR Multilingual VLN Agent</h1>
-                        <span class="px-2 py-0.5 text-[11px] font-mono uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-full">v2.4 Studio</span>
-                        <!-- Integrated Backend Status Pill -->
-                        <span id="backendStatusBadge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-mono rounded-full border backend-badge-offline">
-                            <span id="backendDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                            <span id="backendStatusText">Connecting Backend...</span>
-                        </span>
+    <!-- ======================================================================
+         VIEW 1: PUBLIC LANDING PAGE
+         ====================================================================== -->
+    <div id="viewLanding" class="view-container view-active flex flex-col min-h-screen relative z-10">
+
+        <!-- Landing Navigation Bar -->
+        <header class="w-full border-b border-[#394144]/80 bg-[#1E2325]/90 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5">
+            <div class="max-w-[1400px] mx-auto flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#B8D96B]">
+                        <i class="fa-solid fa-compass-drafting text-base"></i>
                     </div>
-                    <p class="text-xs text-slate-400 hidden sm:block">Room-Across-Room Vision-and-Language Navigation & Topological Map Builder</p>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-base text-[#F0EEE7] tracking-tight">RxR Multilingual VLN</span>
+                            <span class="px-2 py-0.5 text-[10px] font-mono uppercase bg-[#2B3234] text-[#789C91] border border-[#394144] rounded">v2.4</span>
+                        </div>
+                        <p class="text-[11px] text-[#A8ADA9] hidden sm:block">Vision-and-Language Navigation & Topological Studio</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Links -->
+                <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-[#A8ADA9]">
+                    <a href="#featuresSection" class="hover:text-[#F0EEE7] transition">Platform Capabilities</a>
+                    <a href="#architectureSection" class="hover:text-[#F0EEE7] transition">3D Viewport & Builder</a>
+                    <a href="#pipelineSection" class="hover:text-[#F0EEE7] transition">Embodied Pipeline</a>
+                    <a href="#specsSection" class="hover:text-[#F0EEE7] transition">Languages & Metrics</a>
+                </nav>
+
+                <!-- Auth Buttons Slot -->
+                <div id="landingNavUserSlot" class="flex items-center gap-2.5">
+                    <button onclick="AuthManager.navigateTo('login')" class="btn-secondary text-xs font-semibold py-2 px-3.5 rounded-lg transition">
+                        Sign In
+                    </button>
+                    <button onclick="AuthManager.navigateTo('register')" class="btn-primary text-xs font-semibold py-2 px-3.5 rounded-lg flex items-center gap-1.5 transition">
+                        <span>Get Started</span>
+                        <i class="fa-solid fa-arrow-right text-[11px]"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="max-w-[1400px] mx-auto px-6 pt-16 pb-12 flex flex-col items-center text-center relative">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#24292B] border border-[#394144] text-xs font-mono text-[#55BFD0] mb-6">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#72C9A2] animate-pulse"></span>
+                <span>EMBODIED AI • MATTERPORT3D • MULTILINGUAL VLN</span>
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#F0EEE7] max-w-4xl leading-[1.15] mb-6">
+                Spatial Vision-and-Language Navigation Studio
+            </h1>
+
+            <p class="text-sm sm:text-base text-[#A8ADA9] max-w-2xl leading-relaxed mb-9">
+                A research platform integrating natural language navigation across <span class="text-[#F0EEE7] font-medium">English</span>, <span class="text-[#F0EEE7] font-medium">Hindi (हिंदी)</span>, and <span class="text-[#F0EEE7] font-medium">Telugu (తెలుగు)</span> with Matterport3D first-person panoramic viewports, 3D dollhouses, and topological map modeling.
+            </p>
+
+            <!-- Hero Action Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-3.5 mb-14">
+                <button onclick="AuthManager.navigateTo('studio')" class="btn-primary py-3 px-6 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition">
+                    <i class="fa-solid fa-cube"></i>
+                    <span>Launch Studio</span>
+                </button>
+                <a href="#featuresSection" class="btn-secondary py-3 px-6 rounded-xl text-sm font-medium flex items-center gap-2 transition">
+                    <i class="fa-solid fa-layer-group text-[#789C91]"></i>
+                    <span>Explore Features</span>
+                </a>
+            </div>
+
+            <!-- Key Metric Micro-Counters -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-3xl mb-12">
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-3.5 text-center">
+                    <div class="text-xl font-bold font-mono text-[#F0EEE7]">3 Languages</div>
+                    <div class="text-[11px] text-[#A8ADA9] mt-0.5">EN • हिंदी • తెలుగు</div>
+                </div>
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-3.5 text-center">
+                    <div class="text-xl font-bold font-mono text-[#55BFD0]">3 Viewports</div>
+                    <div class="text-[11px] text-[#A8ADA9] mt-0.5">Pano • Dollhouse • 2D</div>
+                </div>
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-3.5 text-center">
+                    <div class="text-xl font-bold font-mono text-[#B8D96B]">Standard VLN</div>
+                    <div class="text-[11px] text-[#A8ADA9] mt-0.5">PL • NE • SPL Scoring</div>
+                </div>
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-3.5 text-center">
+                    <div class="text-xl font-bold font-mono text-[#789C91]">0 Dependencies</div>
+                    <div class="text-[11px] text-[#A8ADA9] mt-0.5">Clean Standard Library</div>
                 </div>
             </div>
 
-            <!-- Environment / Map Selector & Quick Actions -->
-            <div class="flex flex-wrap items-center gap-2.5">
-                <!-- Active Map Dropdown -->
-                <div class="flex items-center bg-slate-900/90 border border-slate-700/70 rounded-xl px-3 py-1.5 gap-2">
-                    <i class="fa-solid fa-map-location-dot text-indigo-400 text-xs"></i>
-                    <span class="text-xs text-slate-400">Map:</span>
-                    <select id="mapSelector" class="bg-slate-900 text-xs sm:text-sm font-semibold text-white focus:outline-none cursor-pointer pr-2 rounded py-0.5" style="color-scheme: dark; background-color: #0f172a; color: #f8fafc;">
-                    </select>
+            <!-- Visual Showcase: 3D Environment Architecture Preview -->
+            <div id="architectureSection" class="w-full max-w-5xl rounded-2xl bg-[#1E2325] border border-[#394144] shadow-2xl p-4 sm:p-6 text-left">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[#394144] pb-4 mb-5">
+                    <div class="flex items-center gap-2.5">
+                        <span class="w-2.5 h-2.5 rounded-full bg-[#72C9A2]"></span>
+                        <span class="font-semibold text-sm text-[#F0EEE7]">Matterport3D Environment Engine</span>
+                        <span class="text-xs font-mono text-[#789C91] bg-[#24292B] px-2 py-0.5 rounded border border-[#394144]">Residential & Campus Topologies</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs font-mono text-[#A8ADA9]">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-street-view text-[#55BFD0]"></i> 360° Pano</span>
+                        <span class="text-[#394144]">•</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-cubes text-[#B8D96B]"></i> 3D Dollhouse</span>
+                        <span class="text-[#394144]">•</span>
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-map text-[#789C91]"></i> 2D Blueprint</span>
+                    </div>
                 </div>
 
-                <button onclick="openNewMapModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition">
-                    <i class="fa-solid fa-plus text-emerald-400"></i>
-                    <span>New Map</span>
-                </button>
+                <!-- Architectural Graphic / Technical Overview Diagram -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-semibold text-[#55BFD0] mb-2">
+                                <span>360° PANORAMA</span>
+                                <i class="fa-solid fa-street-view text-sm"></i>
+                            </div>
+                            <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                                First-person viewpoint inspection with interactive 3D floor hotspots and architectural doorways for seamless room-to-room transitions.
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-[#394144] flex items-center justify-between text-[11px] font-mono text-[#777F7D]">
+                            <span>FOV: 75°</span>
+                            <span class="text-[#72C9A2]">Continuous Rollout</span>
+                        </div>
+                    </div>
 
-                <button onclick="openJsonModal()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1.5 transition" title="Import or Export Map JSON for GitHub Repo">
-                    <i class="fa-solid fa-code text-cyan-400"></i>
-                    <span class="hidden md:inline">Map JSON</span>
-                </button>
+                    <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-semibold text-[#B8D96B] mb-2">
+                                <span>3D DOLLHOUSE</span>
+                                <i class="fa-solid fa-cubes text-sm"></i>
+                            </div>
+                            <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                                Orbital 3D camera controls, transparent walls with parametric opacity, wireframe cages, and procedural furniture landmark anchors.
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-[#394144] flex items-center justify-between text-[11px] font-mono text-[#777F7D]">
+                            <span>Orbit Controls</span>
+                            <span class="text-[#B8D96B]">WebGL Hardware Accel</span>
+                        </div>
+                    </div>
 
-                <!-- Mode Switcher Tabs -->
-                <div class="bg-slate-900/90 p-1 rounded-xl border border-slate-800 flex items-center">
-                    <button id="modeSimBtn" onclick="switchMode('simulator')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-md shadow-indigo-600/30">
-                        <i class="fa-solid fa-robot"></i>
-                        <span>VLN Simulator</span>
+                    <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between text-xs font-semibold text-[#789C91] mb-2">
+                                <span>2D TOPOLOGICAL MAP</span>
+                                <i class="fa-solid fa-vector-square text-sm"></i>
+                            </div>
+                            <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                                Interactive blueprint studio for creating custom rooms, placing viewpoint nodes, auto-linking graph edges, and exporting JSON schemas.
+                            </p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-[#394144] flex items-center justify-between text-[11px] font-mono text-[#777F7D]">
+                            <span>Dijkstra Planner</span>
+                            <span class="text-[#55BFD0]">REST Synced</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Grid Section -->
+        <section id="featuresSection" class="max-w-[1400px] mx-auto px-6 py-16 border-t border-[#394144]/60">
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <span class="text-xs font-mono uppercase tracking-wider text-[#B8D96B]">Core Capabilities</span>
+                <h2 class="text-2xl sm:text-3xl font-bold text-[#F0EEE7] mt-2 mb-3">Designed for Embodied AI Research</h2>
+                <p class="text-xs sm:text-sm text-[#A8ADA9]">Every component has been engineered to provide precise simulation control, multilingual instruction processing, and spatial feedback.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Feature 1 -->
+                <div class="card-architectural p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#B8D96B] mb-3.5">
+                            <i class="fa-solid fa-language text-sm"></i>
+                        </div>
+                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Multilingual Instruction Engine</h3>
+                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                            Process natural language navigation commands across English, Hindi, and Telugu with automatic entity extraction and destination detection.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#789C91]">
+                        EN • HI • TE Preloaded Presets
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="card-architectural p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#55BFD0] mb-3.5">
+                            <i class="fa-solid fa-brain text-sm"></i>
+                        </div>
+                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Cross-Modal Token Attention</h3>
+                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                            Visualize natural language focus weights across hops with an interactive token heatmap powered by RxR-M-BERT + LSTM attention weights.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#55BFD0]">
+                        α-Temperature: 0.88 Normalized
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="card-architectural p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#789C91] mb-3.5">
+                            <i class="fa-solid fa-compass-drafting text-sm"></i>
+                        </div>
+                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Room & Topological Map Builder</h3>
+                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                            Construct indoor floorplans with custom dimensions, theme colors, furniture models, and topological edges with auto-linking heuristics.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#789C91]">
+                        Interactive 2D Canvas + 3D Sync
+                    </div>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="card-architectural p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#72C9A2] mb-3.5">
+                            <i class="fa-solid fa-chart-simple text-sm"></i>
+                        </div>
+                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Standard VLN Evaluation Metrics</h3>
+                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                            Real-time calculation of Path Length (PL), Navigation Error (NE) to goal viewpoint, and Success weighted by Path Length (SPL).
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#72C9A2]">
+                        Benchmarked on Matterport3D
+                    </div>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="card-architectural p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#E5AD69] mb-3.5">
+                            <i class="fa-solid fa-route text-sm"></i>
+                        </div>
+                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Dijkstra Shortest-Path Planning</h3>
+                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                            Optimal path planning policies compute geometric trajectories between viewpoints while accounting for doorway portals and obstacles.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#E5AD69]">
+                        REST API: /api/plan-path
+                    </div>
+                </div>
+
+                <!-- Feature 6 -->
+                <div class="card-architectural p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#D87979] mb-3.5">
+                            <i class="fa-solid fa-shield-halved text-sm"></i>
+                        </div>
+                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Isolated Security & Session Auth</h3>
+                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
+                            Cryptographic password hashing (PBKDF2-SHA512) and bearer session tokens isolated from the AI simulation pipeline.
+                        </p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#D87979]">
+                        Node.js & Python Dual Backends
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Product Demonstration Section -->
+        <section id="pipelineSection" class="max-w-[1400px] mx-auto px-6 py-16 border-t border-[#394144]/60">
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <span class="text-xs font-mono uppercase tracking-wider text-[#55BFD0]">Navigation Workflow</span>
+                <h2 class="text-2xl sm:text-3xl font-bold text-[#F0EEE7] mt-2 mb-3">How the Spatial AI Navigates</h2>
+                <p class="text-xs sm:text-sm text-[#A8ADA9]">From natural language command to 3D continuous embodiment in 3 stages.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 relative">
+                    <span class="text-3xl font-mono font-bold text-[#394144] absolute top-4 right-4">01</span>
+                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-quote-left text-[#B8D96B]"></i>
+                        Instruction Encoding
+                    </h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
+                        Linguistic tokens in English, Hindi, or Telugu are parsed to detect landmarks (e.g. Sofa, Fridge) and resolve the destination node.
+                    </p>
+                    <div class="bg-[#1b2022] border border-[#394144] rounded p-2.5 font-mono text-[11px] text-[#A8ADA9]">
+                        "बैठक कक्ष में सोफा के पास से शुरू करें और रसोईघर में रुकें..."
+                    </div>
+                </div>
+
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 relative">
+                    <span class="text-3xl font-mono font-bold text-[#394144] absolute top-4 right-4">02</span>
+                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-network-wired text-[#55BFD0]"></i>
+                        Topological Graph Route
+                    </h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
+                        The backend REST engine determines the optimal sequence of viewpoint hops across rooms through open 3D architectural portals.
+                    </p>
+                    <div class="bg-[#1b2022] border border-[#394144] rounded p-2.5 font-mono text-[11px] text-[#55BFD0]">
+                        Path: [vp_1 ➔ vp_2 ➔ vp_3 ➔ vp_4] (Dijkstra)
+                    </div>
+                </div>
+
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 relative">
+                    <span class="text-3xl font-mono font-bold text-[#394144] absolute top-4 right-4">03</span>
+                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-person-walking text-[#72C9A2]"></i>
+                        Embodied Trajectory
+                    </h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
+                        The agent walks at configurable pace (0.4x - 2.5x), smooths yaw orientation, renders 3D trajectory tubes, and records SPL.
+                    </p>
+                    <div class="bg-[#1b2022] border border-[#394144] rounded p-2.5 font-mono text-[11px] text-[#72C9A2]">
+                        PL: 14.8m • NE: 0.0m • SPL: 1.00 (STOP)
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final CTA Banner -->
+        <section class="max-w-[1400px] mx-auto px-6 py-16 w-full">
+            <div class="rounded-2xl bg-[#1E2325] border border-[#394144] p-8 sm:p-12 text-center relative overflow-hidden">
+                <h2 class="text-2xl sm:text-3xl font-bold text-[#F0EEE7] mb-3">Ready to Explore Embodied VLN?</h2>
+                <p class="text-xs sm:text-sm text-[#A8ADA9] max-w-xl mx-auto mb-8">
+                    Launch the interactive studio to build custom topological floorplans, test multilingual navigation policies, and inspect 3D Matterport scenes.
+                </p>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <button onclick="AuthManager.navigateTo('studio')" class="btn-primary py-3 px-6 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
+                        <i class="fa-solid fa-cube"></i>
+                        <span>Launch Studio Now</span>
                     </button>
-                    <button id="modeEditBtn" onclick="switchMode('editor')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 text-slate-400 hover:text-white">
-                        <i class="fa-solid fa-vector-square"></i>
-                        <span>Room & Map Builder</span>
+                    <button onclick="AuthManager.navigateTo('login')" class="btn-secondary py-3 px-6 rounded-xl text-sm font-medium transition">
+                        Sign In with Credentials
                     </button>
                 </div>
+            </div>
+        </section>
+
+        <!-- Landing Footer -->
+        <footer class="border-t border-[#394144]/60 bg-[#171A1C] px-6 py-8 text-center text-xs text-[#777F7D]">
+            <div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2 text-[#A8ADA9]">
+                    <i class="fa-solid fa-compass-drafting text-[#B8D96B]"></i>
+                    <span class="font-semibold">RxR Multilingual VLN Agent & Studio</span>
+                </div>
+                <div>MIT License • Designed for Embodied AI and Multilingual VLN Research</div>
+                <div class="flex items-center gap-4 text-[#A8ADA9]">
+                    <a href="#viewLanding" class="hover:text-[#F0EEE7]">Back to Top</a>
+                    <span>•</span>
+                    <button onclick="AuthManager.navigateTo('studio')" class="hover:text-[#B8D96B]">Studio Workspace</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ======================================================================
+         VIEW 2: AUTHENTICATION CONTAINER (LOGIN & REGISTRATION)
+         ====================================================================== -->
+    <div id="viewAuth" class="view-container view-hidden flex flex-col justify-center items-center min-h-screen px-4 py-12 relative z-10">
+
+        <!-- Back to Home Link -->
+        <div class="max-w-md w-full mb-4 flex items-center justify-between">
+            <button onclick="AuthManager.navigateTo('landing')" class="text-xs text-[#A8ADA9] hover:text-[#F0EEE7] flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Return to Landing Page</span>
+            </button>
+            <span class="text-xs font-mono text-[#789C91]">v2.4 Auth Gateway</span>
+        </div>
+
+        <!-- AUTH CARD 1: LOGIN -->
+        <div id="authLoginCard" class="card-architectural max-w-md w-full p-6 sm:p-8 bg-[#1E2325] border border-[#394144] shadow-2xl">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#B8D96B]">
+                    <i class="fa-solid fa-lock text-base"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-[#F0EEE7]">Researcher Sign In</h2>
+                    <p class="text-xs text-[#A8ADA9]">Access the RxR VLN Studio workspace</p>
+                </div>
+            </div>
+
+            <!-- Error and Success Banners -->
+            <div id="loginErrorAlert" class="hidden mb-4 p-3 rounded-lg bg-[#D87979]/15 border border-[#D87979]/40 text-xs text-[#D87979] flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+                <span id="loginErrorText">Error message</span>
+            </div>
+            <div id="loginSuccessAlert" class="hidden mb-4 p-3 rounded-lg bg-[#72C9A2]/15 border border-[#72C9A2]/40 text-xs text-[#72C9A2] flex items-center gap-2">
+                <i class="fa-solid fa-circle-check shrink-0"></i>
+                <span>Authentication successful! Launching studio...</span>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-[#A8ADA9] mb-1.5">Email Address</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-envelope absolute left-3 top-3 text-xs text-[#777F7D]"></i>
+                        <input id="loginEmail" type="email" required placeholder="researcher@rxr.studio" class="w-full pl-9 pr-3 py-2 rounded-lg text-xs font-medium bg-[#1b2022] border border-[#394144] text-[#F0EEE7] focus:border-[#55BFD0]">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label class="text-xs font-medium text-[#A8ADA9]">Password</label>
+                    </div>
+                    <div class="relative">
+                        <i class="fa-solid fa-key absolute left-3 top-3 text-xs text-[#777F7D]"></i>
+                        <input id="loginPassword" type="password" required placeholder="••••••••" class="w-full pl-9 pr-10 py-2 rounded-lg text-xs font-medium bg-[#1b2022] border border-[#394144] text-[#F0EEE7] focus:border-[#55BFD0]">
+                        <button type="button" onclick="togglePasswordVisibility('loginPassword', 'loginEyeIcon')" class="absolute right-3 top-2.5 text-xs text-[#777F7D] hover:text-[#A8ADA9]">
+                            <i id="loginEyeIcon" class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Demo Credentials Quick Pre-fill -->
+                <div class="pt-1">
+                    <button type="button" onclick="prefillDemoCredentials()" class="w-full py-1.5 px-2.5 rounded-lg bg-[#24292B] border border-[#394144] hover:border-[#789C91] text-[11px] font-mono text-[#789C91] flex items-center justify-center gap-1.5 transition">
+                        <i class="fa-solid fa-flask"></i>
+                        <span>Pre-fill Demo Account (researcher@rxr.studio)</span>
+                    </button>
+                </div>
+
+                <button id="btnLoginSubmit" type="submit" class="w-full btn-primary py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition mt-2">
+                    <span id="btnLoginText">Sign In to Studio</span>
+                    <i id="btnLoginSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-5 border-t border-[#394144] text-center text-xs text-[#A8ADA9]">
+                <span>Don't have an account?</span>
+                <button onclick="AuthManager.navigateTo('register')" class="text-[#B8D96B] hover:underline font-medium ml-1">
+                    Register New Account
+                </button>
             </div>
         </div>
-    </header>
 
-    <!-- Main Workspace Container -->
-    <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 lg:px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
-
-        <!-- LEFT PANEL: Controls (Switches between VLN Instruction Panel & Room/Map Builder Panel) -->
-        <section class="lg:col-span-4 flex flex-col gap-4">
-
-            <!-- SIMULATOR CONTROLS PANEL -->
-            <div id="simulatorPanel" class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col gap-4">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-language text-indigo-400"></i>
-                        <h2 class="font-semibold text-sm sm:text-base text-white">Multilingual Instruction Input</h2>
-                    </div>
-                    <!-- Language Selector Pills -->
-                    <div class="flex gap-1 bg-slate-900 p-1 rounded-lg border border-slate-800">
-                        <button onclick="setLanguage('en')" id="langBtn-en" class="px-2.5 py-1 rounded text-xs font-medium bg-indigo-600 text-white transition">EN</button>
-                        <button onclick="setLanguage('hi')" id="langBtn-hi" class="px-2.5 py-1 rounded text-xs font-medium text-slate-400 hover:text-white transition">हिंदी</button>
-                        <button onclick="setLanguage('te')" id="langBtn-te" class="px-2.5 py-1 rounded text-xs font-medium text-slate-400 hover:text-white transition">తెలుగు</button>
-                    </div>
+        <!-- AUTH CARD 2: REGISTRATION -->
+        <div id="authRegisterCard" class="card-architectural max-w-md w-full p-6 sm:p-8 bg-[#1E2325] border border-[#394144] shadow-2xl hidden">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#55BFD0]">
+                    <i class="fa-solid fa-user-plus text-base"></i>
                 </div>
-
-                <!-- Sample Presets Dropdown -->
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1.5">Preset RxR Navigation Instructions</label>
-                    <select id="presetInstructionSelect" onchange="applyPresetInstruction()" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
-                    </select>
-                </div>
-
-                <!-- Custom Instruction Textarea -->
-                <div>
-                    <div class="flex justify-between items-center mb-1.5">
-                        <label class="text-xs text-slate-400">Natural Language Command (Mention room or landmark names)</label>
-                        <span id="detectedLangBadge" class="text-[11px] font-mono text-cyan-400">English (en-US)</span>
-                    </div>
-                    <textarea id="instructionInput" rows="3" class="w-full bg-slate-900/90 border border-slate-700/80 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition resize-none" placeholder="e.g., Start in the Living Room, walk past the Hallway and stop in the Kitchen near the Fridge."></textarea>
-                </div>
-
-                <!-- Start & Goal Room Override -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Start Viewpoint / Room</label>
-                        <select id="startNodeSelect" onchange="updateStartGoalNodes()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"></select>
-                    </div>
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Target Destination Room</label>
-                        <select id="goalNodeSelect" onchange="updateStartGoalNodes()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"></select>
-                    </div>
-                </div>
-
-                <!-- Execution Controls -->
-                <div class="grid grid-cols-3 gap-2 pt-1">
-                    <button onclick="runFullSimulation()" id="btnRunNav" class="col-span-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2 transition">
-                        <i class="fa-solid fa-play"></i>
-                        <span>Execute VLN Agent</span>
-                    </button>
-                    <div class="flex gap-1.5">
-                        <button onclick="stepSimulation()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center justify-center transition" title="Step Forward 1 Action">
-                            <i class="fa-solid fa-forward-step"></i>
-                        </button>
-                        <button onclick="resetSimulation()" class="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-rose-400 border border-slate-700 text-xs font-medium flex items-center justify-center transition" title="Reset Agent Pose">
-                            <i class="fa-solid fa-rotate-left"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Cross-Modal Token Attention Visualizer -->
-                <div class="glass-card rounded-xl p-3.5 border border-slate-800">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-brain text-purple-400"></i>
-                            Cross-Modal Token Attention
-                        </span>
-                        <span class="text-[11px] font-mono text-slate-400" id="attentionEntropyLabel">α-temp: 0.88</span>
-                    </div>
-                    <div id="tokenAttentionContainer" class="flex flex-wrap gap-1.5 min-h-[48px] items-center">
-                        <!-- Dynamically populated token pills with attention heatmap colors -->
-                    </div>
-                </div>
-
-                <!-- 3D Matterport Scene & Walking Pace Controls Card -->
-                <div class="glass-card rounded-xl p-3.5 border border-slate-800 flex flex-col gap-3">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-cube text-cyan-400"></i>
-                            Unified Viewport & Pace Controls
-                        </span>
-                        <span id="currentRoomBadge" class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                            Living Room
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-3 gap-1.5">
-                        <button onclick="set3DCameraMode('panorama')" id="camBtn-panorama" class="py-2 px-2 rounded-lg bg-cyan-500/20 border border-cyan-500/50 text-cyan-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                            <i class="fa-solid fa-street-view"></i>
-                            <span>360° Pano</span>
-                        </button>
-                        <button onclick="set3DCameraMode('dollhouse')" id="camBtn-dollhouse" class="py-2 px-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                            <i class="fa-solid fa-cubes"></i>
-                            <span>Dollhouse</span>
-                        </button>
-                        <button onclick="set3DCameraMode('map2d')" id="camBtn-map2d" class="py-2 px-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition">
-                            <i class="fa-solid fa-map"></i>
-                            <span>2D Map</span>
-                        </button>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-3 text-xs">
-                        <span class="text-slate-400 text-[11px] flex items-center gap-1.5">
-                            <i class="fa-solid fa-person-walking text-emerald-400"></i>
-                            Walking Pace
-                        </span>
-                        <div class="flex items-center gap-2">
-                            <input id="walkingPaceSlider" type="range" min="0.3" max="2.5" step="0.1" value="1.0" oninput="updateWalkingPace(this.value)" class="w-24 accent-emerald-400 cursor-pointer">
-                            <span id="walkingPaceLabel" class="font-mono text-[11px] text-emerald-300 w-10 text-right">1.0x</span>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-between gap-3 text-xs">
-                        <span class="text-slate-400 text-[11px]">3D Wall Transparency</span>
-                        <input id="wallOpacitySlider" type="range" min="0.04" max="0.55" step="0.02" value="0.18" oninput="update3DWallOpacity(this.value)" class="w-32 accent-cyan-400 cursor-pointer">
-                    </div>
-
-                    <div class="flex items-center justify-between text-[11px] font-mono bg-slate-950/80 px-2.5 py-1.5 rounded-lg border border-slate-800/80">
-                        <span id="egoPoseText" class="text-slate-300">Node: vp_1 | Yaw: 0°</span>
-                        <span id="egoLandmarksText" class="text-emerald-400 truncate max-w-[165px]">Near: Sofa, TV</span>
-                    </div>
+                    <h2 class="text-lg font-bold text-[#F0EEE7]">Create Researcher Account</h2>
+                    <p class="text-xs text-[#A8ADA9]">Register to save and export custom maps</p>
                 </div>
             </div>
 
-            <!-- MAP & ROOM EDITOR PANEL (Hidden in Simulator Mode) -->
-            <div id="editorPanel" class="glass-panel rounded-2xl p-4 sm:p-5 hidden flex-col gap-4">
-                <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-layer-group text-emerald-400"></i>
-                        <h2 class="font-semibold text-sm sm:text-base text-white">Map & Room Studio</h2>
-                    </div>
-                    <span class="px-2 py-0.5 text-[11px] font-mono bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 rounded-md">Interactive Mode</span>
-                </div>
+            <!-- Error and Success Banners -->
+            <div id="regErrorAlert" class="hidden mb-4 p-3 rounded-lg bg-[#D87979]/15 border border-[#D87979]/40 text-xs text-[#D87979] flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation shrink-0"></i>
+                <span id="regErrorText">Error message</span>
+            </div>
+            <div id="regSuccessAlert" class="hidden mb-4 p-3 rounded-lg bg-[#72C9A2]/15 border border-[#72C9A2]/40 text-xs text-[#72C9A2] flex items-center gap-2">
+                <i class="fa-solid fa-circle-check shrink-0"></i>
+                <span>Account created! Redirecting to studio workspace...</span>
+            </div>
 
-                <!-- Interactive Canvas Tool Picker -->
+            <form id="registerForm" onsubmit="handleRegisterSubmit(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs text-slate-400 mb-2">Canvas Interaction Tool</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                        <button onclick="setEditorTool('select')" id="toolBtn-select" class="p-2 rounded-xl border border-indigo-500 bg-indigo-600/20 text-white text-xs font-medium flex flex-col items-center gap-1 transition">
-                            <i class="fa-solid fa-arrow-pointer text-sm"></i>
-                            <span>Select/Move</span>
-                        </button>
-                        <button onclick="setEditorTool('addRoom')" id="toolBtn-addRoom" class="p-2 rounded-xl border border-slate-700 bg-slate-900/70 text-slate-300 hover:text-white text-xs font-medium flex flex-col items-center gap-1 transition">
-                            <i class="fa-solid fa-vector-square text-sm text-emerald-400"></i>
-                            <span>Add Room</span>
-                        </button>
-                        <button onclick="setEditorTool('addNode')" id="toolBtn-addNode" class="p-2 rounded-xl border border-slate-700 bg-slate-900/70 text-slate-300 hover:text-white text-xs font-medium flex flex-col items-center gap-1 transition">
-                            <i class="fa-solid fa-location-dot text-sm text-cyan-400"></i>
-                            <span>Add Node</span>
-                        </button>
-                        <button onclick="setEditorTool('connectEdge')" id="toolBtn-connectEdge" class="p-2 rounded-xl border border-slate-700 bg-slate-900/70 text-slate-300 hover:text-white text-xs font-medium flex flex-col items-center gap-1 transition">
-                            <i class="fa-solid fa-bezier-curve text-sm text-amber-400"></i>
-                            <span>Link Nodes</span>
-                        </button>
-                    </div>
-                    <p id="editorToolHint" class="text-[11px] text-slate-400 mt-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
-                        <i class="fa-solid fa-circle-info text-indigo-400 mr-1"></i>
-                        Drag rooms or viewpoint nodes on the canvas to reposition them.
-                    </p>
-
-                    <!-- Quick Node Linker Dropdown Tool -->
-                    <div id="quickLinkPanel" class="mt-2.5 p-3 rounded-xl bg-slate-900/90 border border-slate-800 flex flex-col gap-2.5">
-                        <div class="flex items-center justify-between">
-                            <span class="text-[11px] font-semibold text-amber-300 flex items-center gap-1.5">
-                                <i class="fa-solid fa-bezier-curve"></i>
-                                Link Viewpoints & Create Door
-                            </span>
-                            <span id="activeLinkIndicator" class="text-[10px] font-mono text-slate-400">Click or Pick</span>
-                        </div>
-                        <div class="flex flex-col gap-2">
-                            <div class="flex items-center gap-1.5 w-full">
-                                <select id="linkNodeASelect" class="min-w-0 flex-1 bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400 truncate"></select>
-                                <span class="text-slate-400 text-xs shrink-0 font-bold px-0.5">↔</span>
-                                <select id="linkNodeBSelect" class="min-w-0 flex-1 bg-slate-950 border border-slate-700/80 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400 truncate"></select>
-                            </div>
-                            <button onclick="linkNodesFromDropdown()" class="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5" title="Connect Selected Nodes and Create Door">
-                                <i class="fa-solid fa-link"></i>
-                                <span>Link Nodes & Place Door</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Active Selected Entity Inspector (Room / Node / Door) -->
-                    <div id="sidebarSelectedEntityCard" class="mt-2.5 p-3 rounded-xl border border-slate-800 bg-slate-900/90 flex flex-col gap-2">
-                        <div class="flex items-center justify-between">
-                            <span id="sidebarSelTypeBadge" class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                                <i class="fa-solid fa-hand-pointer text-indigo-400"></i> Selection Inspector
-                            </span>
-                            <button id="sidebarDeleteBtn" onclick="deleteSelectedEntity()" class="hidden px-2.5 py-1 rounded-lg bg-rose-500/20 hover:bg-rose-500 border border-rose-500/40 text-rose-300 hover:text-white text-xs font-semibold items-center gap-1.5 transition">
-                                <i class="fa-solid fa-trash-can"></i>
-                                <span id="sidebarDeleteBtnText">Delete</span>
-                            </button>
-                        </div>
-                        <h4 id="sidebarSelTitle" class="text-xs font-bold text-slate-200">No Item Selected</h4>
-                        <p id="sidebarSelSubtitle" class="text-[11px] text-slate-400 font-mono">Click any room, viewpoint node, or door to inspect or delete.</p>
+                    <label class="block text-xs font-medium text-[#A8ADA9] mb-1.5">Full Name / Researcher Name</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-user absolute left-3 top-3 text-xs text-[#777F7D]"></i>
+                        <input id="regName" type="text" required placeholder="Dr. Alice Chen" class="w-full pl-9 pr-3 py-2 rounded-lg text-xs font-medium bg-[#1b2022] border border-[#394144] text-[#F0EEE7] focus:border-[#55BFD0]">
                     </div>
                 </div>
 
-                <!-- Create / Configure Room Form (Above Simulator Deployment) -->
-                <div class="glass-card rounded-xl p-3.5 border border-slate-800 flex flex-col gap-3">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-300 flex items-center justify-between">
-                        <span>Create / Configure Room</span>
-                        <span class="text-[10px] font-normal text-slate-400">Click "Add Room" or button below</span>
-                    </h3>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="block text-[11px] text-slate-400 mb-1">Room Name (EN)</label>
-                            <input id="newRoomName" type="text" placeholder="e.g., Robotics Lab" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] text-slate-400 mb-1">Room Theme Color</label>
-                            <select id="newRoomColor" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500">
-                                <option value="#6366f1">Indigo (Living / Hall)</option>
-                                <option value="#10b981">Emerald (Kitchen / Dining)</option>
-                                <option value="#f59e0b">Amber (Study / Lab)</option>
-                                <option value="#ec4899">Rose (Bedroom / Lounge)</option>
-                                <option value="#06b6d4">Cyan (Bathroom / Balcony)</option>
-                                <option value="#8b5cf6">Purple (Conference / Office)</option>
-                            </select>
-                        </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#A8ADA9] mb-1.5">Email Address</label>
+                    <div class="relative">
+                        <i class="fa-regular fa-envelope absolute left-3 top-3 text-xs text-[#777F7D]"></i>
+                        <input id="regEmail" type="email" required placeholder="alice.chen@university.edu" class="w-full pl-9 pr-3 py-2 rounded-lg text-xs font-medium bg-[#1b2022] border border-[#394144] text-[#F0EEE7] focus:border-[#55BFD0]">
                     </div>
+                </div>
 
-                    <div class="grid grid-cols-2 gap-2.5">
-                        <div>
-                            <label class="block text-[11px] text-slate-400 mb-1">Width (px)</label>
-                            <input id="newRoomWidth" type="number" value="170" min="80" max="400" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] text-slate-400 mb-1">Height (px)</label>
-                            <input id="newRoomHeight" type="number" value="130" min="80" max="350" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white">
-                        </div>
+                <div>
+                    <label class="block text-xs font-medium text-[#A8ADA9] mb-1.5">Password (Min 6 Characters)</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-key absolute left-3 top-3 text-xs text-[#777F7D]"></i>
+                        <input id="regPassword" type="password" required minlength="6" placeholder="••••••••" class="w-full pl-9 pr-10 py-2 rounded-lg text-xs font-medium bg-[#1b2022] border border-[#394144] text-[#F0EEE7] focus:border-[#55BFD0]">
+                        <button type="button" onclick="togglePasswordVisibility('regPassword', 'regEyeIcon')" class="absolute right-3 top-2.5 text-xs text-[#777F7D] hover:text-[#A8ADA9]">
+                            <i id="regEyeIcon" class="fa-regular fa-eye"></i>
+                        </button>
                     </div>
+                </div>
 
+                <button id="btnRegSubmit" type="submit" class="w-full btn-primary py-2.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition mt-2">
+                    <span id="btnRegText">Register & Launch Studio</span>
+                    <i id="btnRegSpinner" class="fa-solid fa-spinner fa-spin hidden"></i>
+                </button>
+            </form>
+
+            <div class="mt-6 pt-5 border-t border-[#394144] text-center text-xs text-[#A8ADA9]">
+                <span>Already registered?</span>
+                <button onclick="AuthManager.navigateTo('login')" class="text-[#55BFD0] hover:underline font-medium ml-1">
+                    Sign In
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================================
+         VIEW 3: EXISTING RXR MULTILINGUAL VLN STUDIO (PRESERVED FULL FUNCTIONALITY)
+         ====================================================================== -->
+    <div id="viewStudio" class="view-container view-hidden flex-col min-h-screen relative z-10">
+
+        <!-- Top Navigation Bar -->
+        <header class="glass-panel sticky top-0 z-30 border-b border-[#394144] px-4 lg:px-6 py-2.5 bg-[#1E2325]/95 backdrop-blur-md">
+            <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-4">
+                <!-- Brand Title -->
+                <div class="flex items-center gap-3">
+                    <button onclick="AuthManager.navigateTo('landing')" class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#B8D96B] hover:border-[#B8D96B] transition" title="Return to Landing Page">
+                        <i class="fa-solid fa-compass-drafting text-base"></i>
+                    </button>
                     <div>
-                        <label class="block text-[11px] text-slate-400 mb-1">Objects / Landmarks Inside Room (comma-separated)</label>
-                        <input id="newRoomLandmarks" type="text" placeholder="e.g., Workbench, 3D Printer, Monitor" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-
-                    <button onclick="addRoomDirectly()" id="btnAddRoomDirectly" class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-1.5 transition">
-                        <i class="fa-solid fa-plus-circle"></i>
-                        <span>Insert Room + Auto-Waypoint on Map</span>
-                    </button>
-                </div>
-
-                <!-- Dedicated Option: Add Map to VLN Simulator (Below Adding Rooms) -->
-                <div id="publishToSimCard" class="glass-card rounded-xl p-3.5 border border-indigo-500/40 bg-gradient-to-br from-indigo-950/60 via-purple-950/40 to-slate-900/80 flex flex-col gap-2.5 shadow-lg">
-                    <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-robot text-cyan-400 text-sm"></i>
-                            <span class="font-bold text-xs text-white">Simulator Deployment</span>
+                            <h1 class="font-bold text-sm sm:text-base tracking-tight text-[#F0EEE7]">RxR Multilingual VLN Agent</h1>
+                            <span class="px-2 py-0.5 text-[10px] font-mono uppercase tracking-wider bg-[#2B3234] text-[#B8D96B] border border-[#394144] rounded">v2.4 Studio</span>
+                            <!-- Integrated Backend Status Pill -->
+                            <span id="backendStatusBadge" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 text-[11px] font-mono rounded-full border backend-badge-offline">
+                                <span id="backendDot" class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                                <span id="backendStatusText">Connecting Backend...</span>
+                            </span>
                         </div>
-                        <span id="mapSimStatusBadge" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
-                            Draft (Not in Simulator)
-                        </span>
+                        <p class="text-[11px] text-[#A8ADA9] hidden sm:block">Room-Across-Room Vision-and-Language Navigation & Topological Map Builder</p>
                     </div>
-                    <p class="text-[11px] text-slate-300">
-                        Adds this custom map into the VLN Simulator. If not manually added, the simulator will not load this map.
-                    </p>
-                    <button onclick="addCurrentMapToSimulator()" id="btnAddMapToSim" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 flex items-center justify-center gap-2 transition">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <span id="btnAddMapToSimText">Add Map to VLN Simulator</span>
-                    </button>
                 </div>
 
-                <!-- Existing Map Elements List: Rooms, Viewpoint Nodes & Doors -->
-                <div class="flex flex-col gap-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-slate-300">Map Elements</span>
-                        <button onclick="autoConnectNearbyNodes()" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Link
+                <!-- Environment / Map Selector & Quick Actions -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Active Map Dropdown -->
+                    <div class="flex items-center bg-[#1b2022] border border-[#394144] rounded-lg px-2.5 py-1.5 gap-2">
+                        <i class="fa-solid fa-map-location-dot text-[#55BFD0] text-xs"></i>
+                        <span class="text-xs text-[#A8ADA9]">Map:</span>
+                        <select id="mapSelector" class="bg-transparent text-xs sm:text-sm font-semibold text-[#F0EEE7] focus:outline-none cursor-pointer pr-2 rounded py-0.5">
+                        </select>
+                    </div>
+
+                    <button onclick="openNewMapModal()" class="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition">
+                        <i class="fa-solid fa-plus text-[#72C9A2]"></i>
+                        <span>New Map</span>
+                    </button>
+
+                    <button onclick="openJsonModal()" class="btn-secondary px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition" title="Import or Export Map JSON for GitHub Repo">
+                        <i class="fa-solid fa-code text-[#55BFD0]"></i>
+                        <span class="hidden md:inline">Map JSON</span>
+                    </button>
+
+                    <!-- Mode Switcher Tabs -->
+                    <div class="bg-[#1b2022] p-1 rounded-lg border border-[#394144] flex items-center">
+                        <button id="modeSimBtn" onclick="switchMode('simulator')" class="px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 bg-[#B8D96B] text-[#171A1C] shadow-sm">
+                            <i class="fa-solid fa-robot"></i>
+                            <span>VLN Simulator</span>
+                        </button>
+                        <button id="modeEditBtn" onclick="switchMode('editor')" class="px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 text-[#A8ADA9] hover:text-[#F0EEE7]">
+                            <i class="fa-solid fa-vector-square"></i>
+                            <span>Room & Map Builder</span>
                         </button>
                     </div>
 
-                    <!-- Element Tabs: Rooms | Nodes | Doors -->
-                    <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800 text-center">
-                        <button id="elemTab-rooms" onclick="setEditorElementsTab('rooms')" class="py-1 px-1.5 rounded-lg text-[11px] font-semibold bg-indigo-600 text-white transition flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-vector-square text-[10px]"></i>
-                            <span>Rooms (<span id="roomCountLabel">0</span>)</span>
+                    <!-- User Profile & Sign Out Pill -->
+                    <div id="topNavUserPill" class="hidden items-center gap-2 bg-[#2B3234] border border-[#394144] rounded-lg px-2.5 py-1 text-xs">
+                        <div id="topNavUserAvatar" class="w-5 h-5 rounded-full bg-[#789C91] text-[#171A1C] font-bold text-[10px] flex items-center justify-center">
+                            RS
+                        </div>
+                        <span id="topNavUserName" class="text-xs font-medium text-[#F0EEE7] hidden lg:inline">Researcher</span>
+                        <button onclick="AuthManager.logout()" class="text-[#A8ADA9] hover:text-[#D87979] text-xs ml-1 transition" title="Sign Out">
+                            <i class="fa-solid fa-arrow-right-from-bracket"></i>
                         </button>
-                        <button id="elemTab-nodes" onclick="setEditorElementsTab('nodes')" class="py-1 px-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-location-dot text-[10px] text-cyan-400"></i>
-                            <span>Nodes (<span id="nodeCountLabel">0</span>)</span>
-                        </button>
-                        <button id="elemTab-doors" onclick="setEditorElementsTab('doors')" class="py-1 px-1.5 rounded-lg text-[11px] font-semibold text-slate-400 hover:text-white transition flex items-center justify-center gap-1">
-                            <i class="fa-solid fa-door-open text-[10px] text-amber-400"></i>
-                            <span>Doors (<span id="doorCountLabel">0</span>)</span>
-                        </button>
-                    </div>
-
-                    <div id="roomsListContainer" class="max-h-52 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-1">
-                        <!-- Populated dynamically based on selected tab -->
                     </div>
                 </div>
             </div>
+        </header>
 
-        </section>
+        <!-- Main Workspace Container -->
+        <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 lg:px-6 py-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-        <!-- CENTER / RIGHT PANEL: Unified Interactive 3D Panorama / 3D Dollhouse / 2D Map Studio -->
-        <section class="lg:col-span-8 flex flex-col gap-4">
+            <!-- LEFT PANEL: Controls (Switches between VLN Instruction Panel & Room/Map Builder Panel) -->
+            <section class="lg:col-span-4 flex flex-col gap-4">
 
-            <!-- Unified Viewport Interactive Card -->
-            <div class="glass-panel rounded-2xl p-4 flex flex-col gap-3 relative">
-                <!-- Viewport Header Bar -->
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        <h2 id="activeMapTitle" class="font-semibold text-sm sm:text-base text-white">Matterport3D House A</h2>
-                        <span id="activeMapStats" class="text-xs text-slate-400 font-mono hidden sm:inline">(6 Rooms • 7 Viewpoints • 8 Edges)</span>
+                <!-- SIMULATOR CONTROLS PANEL -->
+                <div id="simulatorPanel" class="glass-panel rounded-xl p-4 sm:p-5 flex flex-col gap-4 bg-[#24292B] border border-[#394144]">
+                    <div class="flex items-center justify-between border-b border-[#394144] pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-language text-[#55BFD0]"></i>
+                            <h2 class="font-semibold text-sm sm:text-base text-[#F0EEE7]">Multilingual Instruction Input</h2>
+                        </div>
+                        <!-- Language Selector Pills -->
+                        <div class="flex gap-1 bg-[#1b2022] p-1 rounded-lg border border-[#394144]">
+                            <button onclick="setLanguage('en')" id="langBtn-en" class="px-2.5 py-1 rounded text-xs font-semibold bg-[#B8D96B] text-[#171A1C] transition">EN</button>
+                            <button onclick="setLanguage('hi')" id="langBtn-hi" class="px-2.5 py-1 rounded text-xs font-medium text-[#A8ADA9] hover:text-[#F0EEE7] transition">हिंदी</button>
+                            <button onclick="setLanguage('te')" id="langBtn-te" class="px-2.5 py-1 rounded text-xs font-medium text-[#A8ADA9] hover:text-[#F0EEE7] transition">తెలుగు</button>
+                        </div>
                     </div>
 
-                    <!-- Layer Toggles -->
-                    <div class="flex flex-wrap items-center gap-2">
-                        <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-800">
-                            <input type="checkbox" id="toggleGrid" checked onchange="onToggleVisualLayers()" class="accent-indigo-500">
-                            <span>Grid</span>
-                        </label>
-                        <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-800">
-                            <input type="checkbox" id="toggleDoors" checked onchange="onToggleVisualLayers()" class="accent-indigo-500">
-                            <span>3D Doors</span>
-                        </label>
-                        <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-800">
-                            <input type="checkbox" id="toggleLandmarks" checked onchange="onToggleVisualLayers()" class="accent-indigo-500">
-                            <span>3D Models</span>
-                        </label>
-                        <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-800">
-                            <input type="checkbox" id="toggleNodeIds" checked onchange="onToggleVisualLayers()" class="accent-indigo-500">
-                            <span>Labels</span>
-                        </label>
+                    <!-- Sample Presets Dropdown -->
+                    <div>
+                        <label class="block text-xs text-[#A8ADA9] mb-1.5">Preset RxR Navigation Instructions</label>
+                        <select id="presetInstructionSelect" onchange="applyPresetInstruction()" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-3 py-2 text-xs sm:text-sm text-[#F0EEE7] focus:outline-none focus:border-[#55BFD0]">
+                        </select>
                     </div>
-                </div>
 
-                <!-- ALWAYS-VISIBLE QUICK SIMULATOR RUNNER, WALKING PACE & ROOM TELEPORT BAR -->
-                <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-900/90 border border-slate-800/90 rounded-xl px-3 py-2">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <button onclick="runFullSimulation()" id="btnQuickRunNav" class="px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 flex items-center gap-1.5 transition">
+                    <!-- Custom Instruction Textarea -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs text-[#A8ADA9]">Natural Language Command (Mention room or landmark names)</label>
+                            <span id="detectedLangBadge" class="text-[11px] font-mono text-[#55BFD0]">English (en-US)</span>
+                        </div>
+                        <textarea id="instructionInput" rows="3" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg p-3 text-sm text-[#F0EEE7] placeholder-[#777F7D] focus:outline-none focus:border-[#55BFD0] transition resize-none" placeholder="e.g., Start in the Living Room, walk past the Hallway and stop in the Kitchen near the Fridge."></textarea>
+                    </div>
+
+                    <!-- Start & Goal Room Override -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-[#A8ADA9] mb-1">Start Viewpoint / Room</label>
+                            <select id="startNodeSelect" onchange="updateStartGoalNodes()" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-2.5 py-2 text-xs text-[#F0EEE7] focus:outline-none focus:border-[#55BFD0]"></select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-[#A8ADA9] mb-1">Target Destination Room</label>
+                            <select id="goalNodeSelect" onchange="updateStartGoalNodes()" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-2.5 py-2 text-xs text-[#F0EEE7] focus:outline-none focus:border-[#55BFD0]"></select>
+                        </div>
+                    </div>
+
+                    <!-- Execution Controls -->
+                    <div class="grid grid-cols-3 gap-2 pt-1">
+                        <button onclick="runFullSimulation()" id="btnRunNav" class="col-span-2 py-2.5 px-4 rounded-lg btn-primary text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition">
                             <i class="fa-solid fa-play"></i>
-                            <span>Run Simulator</span>
+                            <span>Execute VLN Agent</span>
                         </button>
-                        <button onclick="stepSimulation()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium flex items-center gap-1 transition" title="Step 1 Hop">
-                            <i class="fa-solid fa-forward-step text-cyan-400"></i>
-                            <span>Step</span>
-                        </button>
-                        <button onclick="resetSimulation()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 text-xs font-medium flex items-center gap-1 transition" title="Reset Trajectory">
-                            <i class="fa-solid fa-rotate-left"></i>
-                            <span>Reset</span>
-                        </button>
-
-                        <!-- Quick Walking Pace Pill -->
-                        <div class="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1 text-xs">
-                            <i class="fa-solid fa-gauge-high text-emerald-400 text-[11px]"></i>
-                            <span class="text-[11px] text-slate-400 hidden sm:inline">Pace:</span>
-                            <select id="quickPaceSelect" onchange="updateWalkingPace(this.value)" class="bg-transparent text-emerald-300 font-mono text-xs focus:outline-none cursor-pointer">
-                                <option value="0.4" class="bg-slate-900">0.4x Slow Walk</option>
-                                <option value="0.7" class="bg-slate-900">0.7x Relaxed</option>
-                                <option value="1.0" selected class="bg-slate-900">1.0x Normal</option>
-                                <option value="1.5" class="bg-slate-900">1.5x Brisk</option>
-                                <option value="2.2" class="bg-slate-900">2.2x Fast</option>
-                            </select>
+                        <div class="flex gap-1.5">
+                            <button onclick="stepSimulation()" class="btn-secondary flex-1 py-2.5 rounded-lg text-xs font-medium flex items-center justify-center transition" title="Step Forward 1 Action">
+                                <i class="fa-solid fa-forward-step text-[#55BFD0]"></i>
+                            </button>
+                            <button onclick="resetSimulation()" class="btn-secondary flex-1 py-2.5 rounded-lg text-[#D87979] text-xs font-medium flex items-center justify-center transition" title="Reset Agent Pose">
+                                <i class="fa-solid fa-rotate-left"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Instant Room Panorama Switcher Pills -->
-                    <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-0.5 max-w-full">
-                        <span class="text-[11px] text-slate-400 font-mono shrink-0"><i class="fa-solid fa-door-open text-cyan-400 mr-1"></i>Jump to Room:</span>
-                        <div id="quickRoomJumpBar" class="flex items-center gap-1">
-                            <!-- Dynamically populated room pills -->
+                    <!-- Cross-Modal Token Attention Visualizer -->
+                    <div class="glass-card rounded-lg p-3.5 border border-[#394144] bg-[#2B3234]">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium text-[#F0EEE7] flex items-center gap-1.5">
+                                <i class="fa-solid fa-brain text-[#789C91]"></i>
+                                Cross-Modal Token Attention
+                            </span>
+                            <span class="text-[11px] font-mono text-[#A8ADA9]" id="attentionEntropyLabel">α-temp: 0.88</span>
+                        </div>
+                        <div id="tokenAttentionContainer" class="flex flex-wrap gap-1.5 min-h-[48px] items-center">
+                            <!-- Dynamically populated token pills with attention heatmap colors -->
+                        </div>
+                    </div>
+
+                    <!-- 3D Matterport Scene & Walking Pace Controls Card -->
+                    <div class="glass-card rounded-lg p-3.5 border border-[#394144] bg-[#2B3234] flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-[#F0EEE7] flex items-center gap-1.5">
+                                <i class="fa-solid fa-cube text-[#55BFD0]"></i>
+                                Unified Viewport & Pace Controls
+                            </span>
+                            <span id="currentRoomBadge" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#24292B] text-[#B8D96B] border border-[#394144]">
+                                Living Room
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button onclick="set3DCameraMode('panorama')" id="camBtn-panorama" class="py-2 px-2 rounded-lg bg-[#2B3234] border border-[#55BFD0] text-[#55BFD0] text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-street-view"></i>
+                                <span>360° Pano</span>
+                            </button>
+                            <button onclick="set3DCameraMode('dollhouse')" id="camBtn-dollhouse" class="py-2 px-2 rounded-lg bg-[#1E2325] border border-[#394144] text-[#A8ADA9] hover:text-[#F0EEE7] text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-cubes"></i>
+                                <span>Dollhouse</span>
+                            </button>
+                            <button onclick="set3DCameraMode('map2d')" id="camBtn-map2d" class="py-2 px-2 rounded-lg bg-[#1E2325] border border-[#394144] text-[#A8ADA9] hover:text-[#F0EEE7] text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                                <i class="fa-solid fa-map"></i>
+                                <span>2D Map</span>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 text-xs">
+                            <span class="text-[#A8ADA9] text-[11px] flex items-center gap-1.5">
+                                <i class="fa-solid fa-person-walking text-[#72C9A2]"></i>
+                                Walking Pace
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <input id="walkingPaceSlider" type="range" min="0.3" max="2.5" step="0.1" value="1.0" oninput="updateWalkingPace(this.value)" class="w-24 accent-[#B8D96B] cursor-pointer">
+                                <span id="walkingPaceLabel" class="font-mono text-[11px] text-[#B8D96B] w-10 text-right">1.0x</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-3 text-xs">
+                            <span class="text-[#A8ADA9] text-[11px]">3D Wall Transparency</span>
+                            <input id="wallOpacitySlider" type="range" min="0.04" max="0.55" step="0.02" value="0.18" oninput="update3DWallOpacity(this.value)" class="w-32 accent-[#55BFD0] cursor-pointer">
+                        </div>
+
+                        <div class="flex items-center justify-between text-[11px] font-mono bg-[#171A1C] px-2.5 py-1.5 rounded-lg border border-[#394144]">
+                            <span id="egoPoseText" class="text-[#A8ADA9]">Node: vp_1 | Yaw: 0°</span>
+                            <span id="egoLandmarksText" class="text-[#72C9A2] truncate max-w-[165px]">Near: Sofa, TV</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- UNIFIED SINGLE STAGE VIEWPORT (Switches seamlessly between 360° Panorama, 3D Dollhouse, and 2D Topological Map) -->
-                <div id="unifiedStageWrapper" style="height: 520px; min-height: 500px;" class="relative w-full rounded-xl overflow-hidden bg-slate-950 border border-cyan-500/30 shadow-inner">
-
-                    <!-- LAYER A: 3D MATTERPORT WEBGL VIEWPORT (Panorama & Dollhouse) -->
-                    <div id="matterport3DWrapper" style="width: 100%; height: 100%; position: absolute; inset: 0;" class="absolute inset-0 w-full h-full">
-                        <canvas id="matterport3DCanvas" style="width: 100%; height: 100%; display: block;" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
-                        <!-- Projected 3D Floating HTML Labels Overlay -->
-                        <div id="labels3DContainer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+                <!-- MAP & ROOM EDITOR PANEL (Hidden in Simulator Mode) -->
+                <div id="editorPanel" class="glass-panel rounded-xl p-4 sm:p-5 hidden flex-col gap-4 bg-[#24292B] border border-[#394144]">
+                    <div class="flex items-center justify-between border-b border-[#394144] pb-3">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-layer-group text-[#789C91]"></i>
+                            <h2 class="font-semibold text-sm sm:text-base text-[#F0EEE7]">Map & Room Studio</h2>
+                        </div>
+                        <span class="px-2 py-0.5 text-[11px] font-mono bg-[#2B3234] text-[#B8D96B] border border-[#394144] rounded">Interactive Mode</span>
                     </div>
 
-                    <!-- LAYER B: 2D TOPOLOGICAL FLOORPLAN & BUILDER CANVAS (Merged into same stage, toggled via 2D Map mode) -->
-                    <div id="canvasWrapper" class="absolute inset-0 w-full h-full hidden bg-slate-950">
-                        <canvas id="floorplanCanvas" class="w-full h-full block cursor-crosshair"></canvas>
-
-                        <!-- Floating Legend Overlay for 2D Map -->
-                        <div class="absolute top-14 left-3 bg-slate-900/85 backdrop-blur-md border border-slate-800 rounded-xl px-3 py-1.5 flex flex-wrap items-center gap-2.5 text-[11px] text-slate-300 pointer-events-none">
-                            <span class="font-semibold text-indigo-300">2D Topological Floorplan</span>
-                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-indigo-400 inline-block"></span>Node</span>
-                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>Goal</span>
-                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span>Doorway</span>
-                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-400 inline-block"></span>Agent</span>
+                    <!-- Interactive Canvas Tool Picker -->
+                    <div>
+                        <label class="block text-xs text-[#A8ADA9] mb-2">Canvas Interaction Tool</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                            <button onclick="setEditorTool('select')" id="toolBtn-select" class="p-2 rounded-lg border border-[#B8D96B] bg-[rgba(184,217,107,0.14)] text-[#F0EEE7] text-xs font-semibold flex flex-col items-center gap-1 transition">
+                                <i class="fa-solid fa-arrow-pointer text-sm"></i>
+                                <span>Select/Move</span>
+                            </button>
+                            <button onclick="setEditorTool('addRoom')" id="toolBtn-addRoom" class="p-2 rounded-lg border border-[#394144] bg-[#1E2325] text-[#A8ADA9] hover:text-[#F0EEE7] text-xs font-medium flex flex-col items-center gap-1 transition">
+                                <i class="fa-solid fa-vector-square text-sm text-[#72C9A2]"></i>
+                                <span>Add Room</span>
+                            </button>
+                            <button onclick="setEditorTool('addNode')" id="toolBtn-addNode" class="p-2 rounded-lg border border-[#394144] bg-[#1E2325] text-[#A8ADA9] hover:text-[#F0EEE7] text-xs font-medium flex flex-col items-center gap-1 transition">
+                                <i class="fa-solid fa-location-dot text-sm text-[#55BFD0]"></i>
+                                <span>Add Node</span>
+                            </button>
+                            <button onclick="setEditorTool('connectEdge')" id="toolBtn-connectEdge" class="p-2 rounded-lg border border-[#394144] bg-[#1E2325] text-[#A8ADA9] hover:text-[#F0EEE7] text-xs font-medium flex flex-col items-center gap-1 transition">
+                                <i class="fa-solid fa-bezier-curve text-sm text-[#E5AD69]"></i>
+                                <span>Link Nodes</span>
+                            </button>
                         </div>
+                        <p id="editorToolHint" class="text-[11px] text-[#A8ADA9] mt-2 bg-[#1b2022] px-3 py-1.5 rounded-lg border border-[#394144]">
+                            <i class="fa-solid fa-circle-info text-[#55BFD0] mr-1"></i>
+                            Drag rooms or viewpoint nodes on the canvas to reposition them.
+                        </p>
 
-                        <!-- Floating Selected Entity Inspector (in Editor mode) -->
-                        <div id="selectedEntityBox" class="hidden absolute bottom-12 right-3 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl p-3 text-xs w-64 shadow-xl z-20">
-                            <div class="flex items-center justify-between mb-1.5">
-                                <span id="selEntityTitle" class="font-semibold text-white">Selected Item</span>
-                                <button onclick="deleteSelectedEntity()" class="text-rose-400 hover:text-rose-300 text-xs flex items-center gap-1">
-                                    <i class="fa-solid fa-trash-can"></i> Delete
+                        <!-- Quick Node Linker Dropdown Tool -->
+                        <div id="quickLinkPanel" class="mt-2.5 p-3 rounded-lg bg-[#1E2325] border border-[#394144] flex flex-col gap-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] font-semibold text-[#E5AD69] flex items-center gap-1.5">
+                                    <i class="fa-solid fa-bezier-curve"></i>
+                                    Link Viewpoints & Create Door
+                                </span>
+                                <span id="activeLinkIndicator" class="text-[10px] font-mono text-[#A8ADA9]">Click or Pick</span>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-1.5 w-full">
+                                    <select id="linkNodeASelect" class="min-w-0 flex-1 bg-[#171A1C] border border-[#394144] rounded-lg px-2.5 py-1.5 text-xs text-[#F0EEE7] focus:outline-none focus:border-[#E5AD69] truncate"></select>
+                                    <span class="text-[#A8ADA9] text-xs shrink-0 font-bold px-0.5">↔</span>
+                                    <select id="linkNodeBSelect" class="min-w-0 flex-1 bg-[#171A1C] border border-[#394144] rounded-lg px-2.5 py-1.5 text-xs text-[#F0EEE7] focus:outline-none focus:border-[#E5AD69] truncate"></select>
+                                </div>
+                                <button onclick="linkNodesFromDropdown()" class="w-full py-2 px-3 rounded-lg bg-[#E5AD69] hover:bg-[#efba7a] text-[#171A1C] font-bold text-xs shadow-sm transition flex items-center justify-center gap-1.5" title="Connect Selected Nodes and Create Door">
+                                    <i class="fa-solid fa-link"></i>
+                                    <span>Link Nodes & Place Door</span>
                                 </button>
                             </div>
-                            <p id="selEntitySub" class="text-[11px] text-slate-400 font-mono"></p>
+                        </div>
+
+                        <!-- Active Selected Entity Inspector -->
+                        <div id="sidebarSelectedEntityCard" class="mt-2.5 p-3 rounded-lg border border-[#394144] bg-[#1E2325] flex flex-col gap-2">
+                            <div class="flex items-center justify-between">
+                                <span id="sidebarSelTypeBadge" class="text-[11px] font-semibold uppercase tracking-wider text-[#A8ADA9] flex items-center gap-1.5">
+                                    <i class="fa-solid fa-hand-pointer text-[#55BFD0]"></i> Selection Inspector
+                                </span>
+                                <button id="sidebarDeleteBtn" onclick="deleteSelectedEntity()" class="hidden px-2.5 py-1 rounded-lg bg-[#D87979]/20 hover:bg-[#D87979] border border-[#D87979]/40 text-[#D87979] hover:text-[#171A1C] text-xs font-semibold items-center gap-1.5 transition">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                    <span id="sidebarDeleteBtnText">Delete</span>
+                                </button>
+                            </div>
+                            <h4 id="sidebarSelTitle" class="text-xs font-bold text-[#F0EEE7]">No Item Selected</h4>
+                            <p id="sidebarSelSubtitle" class="text-[11px] text-[#A8ADA9] font-mono">Click any room, viewpoint node, or door to inspect or delete.</p>
                         </div>
                     </div>
 
-                    <!-- UNIFIED TOP-LEFT VIEW SWITCHER BAR (360° Panorama | 3D Dollhouse | 2D Map) -->
-                    <div class="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5 pointer-events-auto bg-slate-950/85 backdrop-blur-md p-1 rounded-xl border border-slate-800 shadow-lg">
-                        <button onclick="set3DCameraMode('panorama')" id="hudBtnPanorama" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500 text-slate-950 shadow-md flex items-center gap-1.5 transition">
-                            <i class="fa-solid fa-street-view"></i> <span>360° Panorama</span>
-                        </button>
-                        <button onclick="set3DCameraMode('dollhouse')" id="hudBtnDollhouse" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 transition">
-                            <i class="fa-solid fa-cubes text-cyan-400"></i> <span>3D Dollhouse</span>
-                        </button>
-                        <button onclick="set3DCameraMode('map2d')" id="hudBtnMap2D" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white flex items-center gap-1.5 transition">
-                            <i class="fa-solid fa-map text-indigo-400"></i> <span>2D Map</span>
-                        </button>
-                        <button onclick="toggle3DAutoRotate()" id="hudBtnAutoRotate" class="px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-300 hover:text-white border-l border-slate-800 transition" title="Toggle Slow 360° Auto-Rotation">
-                            <i class="fa-solid fa-rotate"></i>
+                    <!-- Create / Configure Room Form -->
+                    <div class="glass-card rounded-lg p-3.5 border border-[#394144] bg-[#2B3234] flex flex-col gap-3">
+                        <h3 class="text-xs font-semibold uppercase tracking-wider text-[#F0EEE7] flex items-center justify-between">
+                            <span>Create / Configure Room</span>
+                            <span class="text-[10px] font-normal text-[#A8ADA9]">Click "Add Room" or button below</span>
+                        </h3>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] text-[#A8ADA9] mb-1">Room Name (EN)</label>
+                                <input id="newRoomName" type="text" placeholder="e.g., Robotics Lab" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-2.5 py-1.5 text-xs text-[#F0EEE7] focus:outline-none focus:border-[#55BFD0]">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-[#A8ADA9] mb-1">Room Theme Color</label>
+                                <select id="newRoomColor" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-2.5 py-1.5 text-xs text-[#F0EEE7] focus:outline-none focus:border-[#55BFD0]">
+                                    <option value="#647D75">Sage (Living / Hall)</option>
+                                    <option value="#72C9A2">Mint (Kitchen / Dining)</option>
+                                    <option value="#E5AD69">Amber (Study / Lab)</option>
+                                    <option value="#D87979">Coral (Bedroom / Lounge)</option>
+                                    <option value="#55BFD0">Cyan (Bathroom / Balcony)</option>
+                                    <option value="#B8D96B">Lime (Conference / Office)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] text-[#A8ADA9] mb-1">Width (px)</label>
+                                <input id="newRoomWidth" type="number" value="170" min="80" max="400" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-2.5 py-1.5 text-xs text-[#F0EEE7]">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-[#A8ADA9] mb-1">Height (px)</label>
+                                <input id="newRoomHeight" type="number" value="130" min="80" max="350" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-2.5 py-1.5 text-xs text-[#F0EEE7]">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] text-[#A8ADA9] mb-1">Objects / Landmarks Inside Room (comma-separated)</label>
+                            <input id="newRoomLandmarks" type="text" placeholder="e.g., Workbench, 3D Printer, Monitor" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-2.5 py-1.5 text-xs text-[#F0EEE7] focus:outline-none focus:border-[#55BFD0]">
+                        </div>
+
+                        <button onclick="addRoomDirectly()" id="btnAddRoomDirectly" class="w-full py-2.5 rounded-lg btn-primary text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-solid fa-plus-circle"></i>
+                            <span>Insert Room + Auto-Waypoint on Map</span>
                         </button>
                     </div>
 
-                    <!-- UNIFIED BOTTOM INTERACTIVE STATUS OVERLAY -->
-                    <div class="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 bg-slate-950/85 backdrop-blur-md border border-slate-800/90 rounded-xl px-3 py-1.5 text-[11px] text-slate-300 pointer-events-none">
-                        <span id="hud3DHint" class="flex items-center gap-1.5">
-                            <i class="fa-solid fa-hand-pointer text-cyan-400"></i>
-                            Drag to look 360° • Scroll to zoom • Click glowing 3D floor rings or 3D doors to travel room-to-room
-                        </span>
-                        <span id="hud3DFovText" class="font-mono text-cyan-300">FOV: 75° | Pace: 1.0x</span>
+                    <!-- Option: Add Map to VLN Simulator -->
+                    <div id="publishToSimCard" class="glass-card rounded-lg p-3.5 border border-[#394144] bg-[#2B3234] flex flex-col gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-robot text-[#55BFD0] text-sm"></i>
+                                <span class="font-bold text-xs text-[#F0EEE7]">Simulator Deployment</span>
+                            </div>
+                            <span id="mapSimStatusBadge" class="px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#24292B] text-[#E5AD69] border border-[#394144]">
+                                Draft (Not in Simulator)
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-[#A8ADA9]">
+                            Adds this custom map into the VLN Simulator. If not manually added, the simulator will not load this map.
+                        </p>
+                        <button onclick="addCurrentMapToSimulator()" id="btnAddMapToSim" class="w-full py-2.5 px-3 rounded-lg btn-secondary hover:border-[#55BFD0] text-xs font-semibold flex items-center justify-center gap-2 transition">
+                            <i class="fa-solid fa-cloud-arrow-up text-[#55BFD0]"></i>
+                            <span id="btnAddMapToSimText">Add Map to VLN Simulator</span>
+                        </button>
+                    </div>
+
+                    <!-- Existing Map Elements List -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-medium text-[#F0EEE7]">Map Elements</span>
+                            <button onclick="autoConnectNearbyNodes()" class="text-[11px] text-[#55BFD0] hover:text-[#B8D96B] font-medium flex items-center gap-1 transition">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-Link
+                            </button>
+                        </div>
+
+                        <!-- Element Tabs: Rooms | Nodes | Doors -->
+                        <div class="grid grid-cols-3 gap-1 bg-[#171A1C] p-1 rounded-lg border border-[#394144] text-center">
+                            <button id="elemTab-rooms" onclick="setEditorElementsTab('rooms')" class="py-1 px-1.5 rounded-md text-[11px] font-semibold bg-[#B8D96B] text-[#171A1C] transition flex items-center justify-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-vector-square text-[10px]"></i>
+                                <span>Rooms (<span id="roomCountLabel">0</span>)</span>
+                            </button>
+                            <button id="elemTab-nodes" onclick="setEditorElementsTab('nodes')" class="py-1 px-1.5 rounded-md text-[11px] font-semibold text-[#A8ADA9] hover:text-[#F0EEE7] transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-location-dot text-[10px] text-[#55BFD0]"></i>
+                                <span>Nodes (<span id="nodeCountLabel">0</span>)</span>
+                            </button>
+                            <button id="elemTab-doors" onclick="setEditorElementsTab('doors')" class="py-1 px-1.5 rounded-md text-[11px] font-semibold text-[#A8ADA9] hover:text-[#F0EEE7] transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-door-open text-[10px] text-[#E5AD69]"></i>
+                                <span>Doors (<span id="doorCountLabel">0</span>)</span>
+                            </button>
+                        </div>
+
+                        <div id="roomsListContainer" class="max-h-52 overflow-y-auto custom-scrollbar flex flex-col gap-1.5 pr-1">
+                            <!-- Populated dynamically based on selected tab -->
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Bottom Metrics & Trajectory Action Log Row -->
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-                <!-- Evaluation Metrics Cards -->
-                <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <div class="glass-panel rounded-xl p-3.5 border border-slate-800/80 flex flex-col justify-between">
-                        <div class="flex items-center justify-between text-xs text-slate-400">
-                            <span>Path Length (PL)</span>
-                            <i class="fa-solid fa-route text-indigo-400"></i>
+            </section>
+
+            <!-- CENTER / RIGHT PANEL: Unified Interactive Viewport & Metrics -->
+            <section class="lg:col-span-8 flex flex-col gap-4">
+
+                <!-- Unified Viewport Interactive Card -->
+                <div class="glass-panel rounded-xl p-4 flex flex-col gap-3 relative bg-[#24292B] border border-[#394144]">
+                    <!-- Viewport Header Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-[#72C9A2] animate-pulse"></span>
+                            <h2 id="activeMapTitle" class="font-semibold text-sm sm:text-base text-[#F0EEE7]">Matterport3D House A</h2>
+                            <span id="activeMapStats" class="text-xs text-[#A8ADA9] font-mono hidden sm:inline">(6 Rooms • 7 Viewpoints • 8 Edges)</span>
                         </div>
-                        <div class="mt-2">
-                            <span id="metricPL" class="text-xl font-bold font-mono text-white">0.0m</span>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Trajectory Distance</p>
+
+                        <!-- Layer Toggles -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <label class="flex items-center gap-1.5 text-xs text-[#A8ADA9] hover:text-[#F0EEE7] cursor-pointer bg-[#1E2325] px-2.5 py-1.5 rounded-lg border border-[#394144] transition">
+                                <input type="checkbox" id="toggleGrid" checked onchange="onToggleVisualLayers()" class="accent-[#B8D96B]">
+                                <span>Grid</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 text-xs text-[#A8ADA9] hover:text-[#F0EEE7] cursor-pointer bg-[#1E2325] px-2.5 py-1.5 rounded-lg border border-[#394144] transition">
+                                <input type="checkbox" id="toggleDoors" checked onchange="onToggleVisualLayers()" class="accent-[#B8D96B]">
+                                <span>3D Doors</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 text-xs text-[#A8ADA9] hover:text-[#F0EEE7] cursor-pointer bg-[#1E2325] px-2.5 py-1.5 rounded-lg border border-[#394144] transition">
+                                <input type="checkbox" id="toggleLandmarks" checked onchange="onToggleVisualLayers()" class="accent-[#B8D96B]">
+                                <span>3D Models</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 text-xs text-[#A8ADA9] hover:text-[#F0EEE7] cursor-pointer bg-[#1E2325] px-2.5 py-1.5 rounded-lg border border-[#394144] transition">
+                                <input type="checkbox" id="toggleNodeIds" checked onchange="onToggleVisualLayers()" class="accent-[#B8D96B]">
+                                <span>Labels</span>
+                            </label>
                         </div>
                     </div>
 
-                    <div class="glass-panel rounded-xl p-3.5 border border-slate-800/80 flex flex-col justify-between">
-                        <div class="flex items-center justify-between text-xs text-slate-400">
-                            <span>Nav Error (NE)</span>
-                            <i class="fa-solid fa-bullseye text-cyan-400"></i>
+                    <!-- QUICK SIMULATOR RUNNER, WALKING PACE & ROOM TELEPORT BAR -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 bg-[#1E2325] border border-[#394144] rounded-lg px-3 py-2">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button onclick="runFullSimulation()" id="btnQuickRunNav" class="btn-primary px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-play"></i>
+                                <span>Run Simulator</span>
+                            </button>
+                            <button onclick="stepSimulation()" class="btn-secondary px-2.5 py-1.5 rounded-md text-xs font-medium flex items-center gap-1 transition" title="Step 1 Hop">
+                                <i class="fa-solid fa-forward-step text-[#55BFD0]"></i>
+                                <span>Step</span>
+                            </button>
+                            <button onclick="resetSimulation()" class="btn-secondary px-2.5 py-1.5 rounded-md text-[#D87979] text-xs font-medium flex items-center gap-1 transition" title="Reset Trajectory">
+                                <i class="fa-solid fa-rotate-left"></i>
+                                <span>Reset</span>
+                            </button>
+
+                            <!-- Quick Walking Pace Pill -->
+                            <div class="flex items-center gap-1.5 bg-[#171A1C] border border-[#394144] rounded-lg px-2.5 py-1 text-xs">
+                                <i class="fa-solid fa-gauge-high text-[#B8D96B] text-[11px]"></i>
+                                <span class="text-[11px] text-[#A8ADA9] hidden sm:inline">Pace:</span>
+                                <select id="quickPaceSelect" onchange="updateWalkingPace(this.value)" class="bg-transparent text-[#B8D96B] font-mono text-xs focus:outline-none cursor-pointer">
+                                    <option value="0.4">0.4x Slow</option>
+                                    <option value="0.7">0.7x Relaxed</option>
+                                    <option value="1.0" selected>1.0x Normal</option>
+                                    <option value="1.5">1.5x Brisk</option>
+                                    <option value="2.2">2.2x Fast</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="mt-2">
-                            <span id="metricNE" class="text-xl font-bold font-mono text-white">0.0m</span>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Dist to Goal Node</p>
+
+                        <!-- Instant Room Panorama Switcher Pills -->
+                        <div class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-0.5 max-w-full">
+                            <span class="text-[11px] text-[#A8ADA9] font-mono shrink-0"><i class="fa-solid fa-door-open text-[#55BFD0] mr-1"></i>Room:</span>
+                            <div id="quickRoomJumpBar" class="flex items-center gap-1">
+                                <!-- Dynamically populated room pills -->
+                            </div>
                         </div>
                     </div>
 
-                    <div class="glass-panel rounded-xl p-3.5 border border-slate-800/80 flex flex-col justify-between">
-                        <div class="flex items-center justify-between text-xs text-slate-400">
-                            <span>SPL Score</span>
-                            <i class="fa-solid fa-chart-line text-emerald-400"></i>
-                        </div>
-                        <div class="mt-2">
-                            <span id="metricSPL" class="text-xl font-bold font-mono text-emerald-400">1.00</span>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Success × Optimal</p>
-                        </div>
-                    </div>
+                    <!-- UNIFIED SINGLE STAGE VIEWPORT -->
+                    <div id="unifiedStageWrapper" style="height: 520px; min-height: 500px;" class="relative w-full rounded-xl overflow-hidden bg-[#171A1C] border border-[#394144] shadow-inner">
 
-                    <div class="glass-panel rounded-xl p-3.5 border border-slate-800/80 flex flex-col justify-between">
-                        <div class="flex items-center justify-between text-xs text-slate-400">
-                            <span>Agent Status</span>
-                            <i class="fa-solid fa-circle-check text-purple-400"></i>
+                        <!-- LAYER A: 3D MATTERPORT WEBGL VIEWPORT -->
+                        <div id="matterport3DWrapper" style="width: 100%; height: 100%; position: absolute; inset: 0;" class="absolute inset-0 w-full h-full">
+                            <canvas id="matterport3DCanvas" style="width: 100%; height: 100%; display: block;" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+                            <!-- Projected 3D Floating HTML Labels Overlay -->
+                            <div id="labels3DContainer" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
                         </div>
-                        <div class="mt-2">
-                            <span id="metricStatus" class="text-sm font-bold font-mono px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 inline-block">READY</span>
-                            <p id="metricStepCount" class="text-[11px] text-slate-400 mt-1">Step 0 / 0</p>
+
+                        <!-- LAYER B: 2D TOPOLOGICAL FLOORPLAN & BUILDER CANVAS -->
+                        <div id="canvasWrapper" class="absolute inset-0 w-full h-full hidden bg-[#171A1C]">
+                            <canvas id="floorplanCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+                            <!-- Floating Legend Overlay for 2D Map -->
+                            <div class="absolute top-14 left-3 bg-[#1E2325]/90 backdrop-blur-md border border-[#394144] rounded-lg px-3 py-1.5 flex flex-wrap items-center gap-2.5 text-[11px] text-[#A8ADA9] pointer-events-none">
+                                <span class="font-semibold text-[#F0EEE7]">2D Blueprint</span>
+                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#55BFD0] inline-block"></span>Node</span>
+                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#72C9A2] inline-block"></span>Goal</span>
+                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#E5AD69] inline-block"></span>Doorway</span>
+                                <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#B8D96B] inline-block"></span>Agent</span>
+                            </div>
+
+                            <!-- Floating Selected Entity Inspector -->
+                            <div id="selectedEntityBox" class="hidden absolute bottom-12 right-3 bg-[#1E2325]/95 backdrop-blur-md border border-[#394144] rounded-xl p-3 text-xs w-64 shadow-xl z-20">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span id="selEntityTitle" class="font-semibold text-[#F0EEE7]">Selected Item</span>
+                                    <button onclick="deleteSelectedEntity()" class="text-[#D87979] hover:text-[#ef9a9a] text-xs flex items-center gap-1">
+                                        <i class="fa-solid fa-trash-can"></i> Delete
+                                    </button>
+                                </div>
+                                <p id="selEntitySub" class="text-[11px] text-[#A8ADA9] font-mono"></p>
+                            </div>
+                        </div>
+
+                        <!-- TOP-LEFT VIEW SWITCHER BAR -->
+                        <div class="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-1.5 pointer-events-auto bg-[#1E2325]/90 backdrop-blur-md p-1 rounded-lg border border-[#394144] shadow-md">
+                            <button onclick="set3DCameraMode('panorama')" id="hudBtnPanorama" class="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#55BFD0] text-[#171A1C] shadow-sm flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-street-view"></i> <span>360° Panorama</span>
+                            </button>
+                            <button onclick="set3DCameraMode('dollhouse')" id="hudBtnDollhouse" class="px-3 py-1.5 rounded-md text-xs font-semibold text-[#A8ADA9] hover:text-[#F0EEE7] flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-cubes text-[#55BFD0]"></i> <span>3D Dollhouse</span>
+                            </button>
+                            <button onclick="set3DCameraMode('map2d')" id="hudBtnMap2D" class="px-3 py-1.5 rounded-md text-xs font-semibold text-[#A8ADA9] hover:text-[#F0EEE7] flex items-center gap-1.5 transition">
+                                <i class="fa-solid fa-map text-[#789C91]"></i> <span>2D Map</span>
+                            </button>
+                            <button onclick="toggle3DAutoRotate()" id="hudBtnAutoRotate" class="px-2 py-1.5 rounded-md text-xs font-medium text-[#A8ADA9] hover:text-[#F0EEE7] border-l border-[#394144] transition" title="Toggle 360° Slow Rotation">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                        </div>
+
+                        <!-- BOTTOM INTERACTIVE STATUS OVERLAY -->
+                        <div class="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 bg-[#1E2325]/90 backdrop-blur-md border border-[#394144] rounded-lg px-3 py-1.5 text-[11px] text-[#A8ADA9] pointer-events-none">
+                            <span id="hud3DHint" class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-hand-pointer text-[#55BFD0]"></i>
+                                Drag to look 360° • Scroll to zoom • Click glowing 3D floor rings or 3D doors to travel
+                            </span>
+                            <span id="hud3DFovText" class="font-mono text-[#55BFD0]">FOV: 75° | Pace: 1.0x</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step-by-Step Action Log -->
-                <div class="md:col-span-5 glass-panel rounded-xl p-3.5 border border-slate-800/80 flex flex-col h-36">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
-                            <i class="fa-solid fa-terminal text-indigo-400"></i>
-                            VLN Action Policy Trace
-                        </span>
-                        <span class="text-[11px] font-mono text-slate-400">RxR-M-BERT + LSTM</span>
+                <!-- Bottom Metrics & Trajectory Action Log Row -->
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+                    <!-- Evaluation Metrics Cards -->
+                    <div class="md:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="glass-panel rounded-xl p-3.5 border border-[#394144] bg-[#24292B] flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-xs text-[#A8ADA9]">
+                                <span>Path Length (PL)</span>
+                                <i class="fa-solid fa-route text-[#55BFD0]"></i>
+                            </div>
+                            <div class="mt-2">
+                                <span id="metricPL" class="text-xl font-bold font-mono text-[#F0EEE7]">0.0m</span>
+                                <p class="text-[11px] text-[#A8ADA9] mt-0.5">Trajectory Distance</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel rounded-xl p-3.5 border border-[#394144] bg-[#24292B] flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-xs text-[#A8ADA9]">
+                                <span>Nav Error (NE)</span>
+                                <i class="fa-solid fa-bullseye text-[#E5AD69]"></i>
+                            </div>
+                            <div class="mt-2">
+                                <span id="metricNE" class="text-xl font-bold font-mono text-[#F0EEE7]">0.0m</span>
+                                <p class="text-[11px] text-[#A8ADA9] mt-0.5">Dist to Goal Node</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel rounded-xl p-3.5 border border-[#394144] bg-[#24292B] flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-xs text-[#A8ADA9]">
+                                <span>SPL Score</span>
+                                <i class="fa-solid fa-chart-line text-[#72C9A2]"></i>
+                            </div>
+                            <div class="mt-2">
+                                <span id="metricSPL" class="text-xl font-bold font-mono text-[#72C9A2]">1.00</span>
+                                <p class="text-[11px] text-[#A8ADA9] mt-0.5">Success × Optimal</p>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel rounded-xl p-3.5 border border-[#394144] bg-[#24292B] flex flex-col justify-between">
+                            <div class="flex items-center justify-between text-xs text-[#A8ADA9]">
+                                <span>Agent Status</span>
+                                <i class="fa-solid fa-circle-check text-[#B8D96B]"></i>
+                            </div>
+                            <div class="mt-2">
+                                <span id="metricStatus" class="text-xs font-bold font-mono px-2 py-0.5 rounded bg-[#2B3234] text-[#B8D96B] border border-[#394144] inline-block">READY</span>
+                                <p id="metricStepCount" class="text-[11px] text-[#A8ADA9] mt-1">Step 0 / 0</p>
+                            </div>
+                        </div>
                     </div>
-                    <div id="actionLogContainer" class="flex-1 overflow-y-auto custom-scrollbar font-mono text-xs space-y-1.5 pr-1">
-                        <div class="text-slate-400">[INIT] Multilingual VLN Agent initialized on map.</div>
+
+                    <!-- Step-by-Step Action Log -->
+                    <div class="md:col-span-5 glass-panel rounded-xl p-3.5 border border-[#394144] bg-[#24292B] flex flex-col h-36">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-[#F0EEE7] flex items-center gap-1.5">
+                                <i class="fa-solid fa-terminal text-[#55BFD0]"></i>
+                                VLN Action Policy Trace
+                            </span>
+                            <span class="text-[11px] font-mono text-[#A8ADA9]">RxR-M-BERT + LSTM</span>
+                        </div>
+                        <div id="actionLogContainer" class="flex-1 overflow-y-auto custom-scrollbar font-mono text-xs space-y-1.5 pr-1">
+                            <div class="text-[#A8ADA9]">[INIT] Multilingual VLN Agent initialized on map.</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-        </section>
-    </main>
+            </section>
+        </main>
+    </div>
 
     <!-- MODAL 1: Create New Map Modal -->
-    <div id="newMapModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl max-w-md w-full p-6 border border-slate-700 shadow-2xl">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
-                <h3 class="font-bold text-base text-white flex items-center gap-2">
-                    <i class="fa-solid fa-map text-emerald-400"></i>
+    <div id="newMapModal" class="fixed inset-0 z-50 bg-[#121516]/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="card-architectural rounded-xl max-w-md w-full p-6 bg-[#1E2325] border border-[#394144] shadow-2xl">
+            <div class="flex items-center justify-between border-b border-[#394144] pb-3 mb-4">
+                <h3 class="font-bold text-base text-[#F0EEE7] flex items-center gap-2">
+                    <i class="fa-solid fa-map text-[#72C9A2]"></i>
                     Create New Indoor Map Environment
                 </h3>
-                <button onclick="closeNewMapModal()" class="text-slate-400 hover:text-white">
+                <button onclick="closeNewMapModal()" class="text-[#A8ADA9] hover:text-[#F0EEE7]">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <div class="space-y-3.5">
                 <div>
-                    <label class="block text-xs text-slate-300 mb-1">Environment / Map Name</label>
-                    <input id="createMapName" type="text" placeholder="e.g., IIIT Smart Research Wing - Floor 2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs text-[#A8ADA9] mb-1">Environment / Map Name</label>
+                    <input id="createMapName" type="text" placeholder="e.g., IIIT Smart Research Wing - Floor 2" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-3 py-2 text-sm text-[#F0EEE7] focus:outline-none focus:border-[#55BFD0]">
                 </div>
 
                 <div>
-                    <label class="block text-xs text-slate-300 mb-1">Template Starter Layout</label>
-                    <select id="createMapTemplate" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs text-[#A8ADA9] mb-1">Template Starter Layout</label>
+                    <select id="createMapTemplate" class="w-full bg-[#1b2022] border border-[#394144] rounded-lg px-3 py-2 text-sm text-[#F0EEE7] focus:outline-none focus:border-[#55BFD0]">
                         <option value="empty" selected>Blank Canvas (0 rooms - build from scratch)</option>
                         <option value="starter">Starter 2-Room Layout (Entrance + Main Hall)</option>
                     </select>
                 </div>
 
                 <div class="flex justify-end gap-2 pt-3">
-                    <button onclick="closeNewMapModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700">Cancel</button>
-                    <button onclick="confirmCreateNewMap()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30">Create & Open in Builder</button>
+                    <button onclick="closeNewMapModal()" class="btn-secondary px-4 py-2 rounded-lg text-xs font-medium">Cancel</button>
+                    <button onclick="confirmCreateNewMap()" class="btn-primary px-4 py-2 rounded-lg text-xs font-semibold">Create & Open in Builder</button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- MODAL 2: Import / Export JSON Modal -->
-    <div id="jsonModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm hidden items-center justify-center p-4">
-        <div class="glass-panel rounded-2xl max-w-2xl w-full p-6 border border-slate-700 shadow-2xl flex flex-col gap-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+    <div id="jsonModal" class="fixed inset-0 z-50 bg-[#121516]/80 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="card-architectural rounded-xl max-w-2xl w-full p-6 bg-[#1E2325] border border-[#394144] shadow-2xl flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-[#394144] pb-3">
                 <div>
-                    <h3 class="font-bold text-base text-white flex items-center gap-2">
-                        <i class="fa-solid fa-file-code text-cyan-400"></i>
+                    <h3 class="font-bold text-base text-[#F0EEE7] flex items-center gap-2">
+                        <i class="fa-solid fa-file-code text-[#55BFD0]"></i>
                         Export / Import RxR Topological Map JSON
                     </h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Save this JSON config into your <code class="text-indigo-300">rxr-multilingual-vln-agent</code> repository or load custom maps.</p>
+                    <p class="text-xs text-[#A8ADA9] mt-0.5">Save this JSON config into your repository or load custom indoor topologies.</p>
                 </div>
-                <button onclick="closeJsonModal()" class="text-slate-400 hover:text-white">
+                <button onclick="closeJsonModal()" class="text-[#A8ADA9] hover:text-[#F0EEE7]">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <textarea id="jsonTextarea" rows="12" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 font-mono text-xs text-emerald-300 focus:outline-none focus:border-indigo-500 custom-scrollbar"></textarea>
+            <textarea id="jsonTextarea" rows="12" class="w-full bg-[#171A1C] border border-[#394144] rounded-lg p-3 font-mono text-xs text-[#72C9A2] focus:outline-none focus:border-[#55BFD0] custom-scrollbar"></textarea>
 
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <button onclick="copyMapJson()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium flex items-center gap-1.5 border border-slate-700">
-                    <i class="fa-regular fa-copy"></i> Copy JSON to Clipboard
+                <button onclick="copyMapJson()" class="btn-secondary px-4 py-2 rounded-lg text-xs font-medium flex items-center gap-1.5">
+                    <i class="fa-regular fa-copy text-[#55BFD0]"></i> Copy JSON to Clipboard
                 </button>
                 <div class="flex gap-2">
-                    <button onclick="closeJsonModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-medium hover:bg-slate-700">Close</button>
-                    <button onclick="importMapJson()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/30">Import & Apply JSON</button>
+                    <button onclick="closeJsonModal()" class="btn-secondary px-4 py-2 rounded-lg text-xs font-medium">Close</button>
+                    <button onclick="importMapJson()" class="btn-primary px-4 py-2 rounded-lg text-xs font-semibold">Import & Apply JSON</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Frontend Application Logic -->
+    <!-- Auth Form Logic & Interactions -->
+    <script>
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (!input || !icon) return;
+            if (input.type === "password") {
+                input.type = "text";
+                icon.className = "fa-regular fa-eye-slash";
+            } else {
+                input.type = "password";
+                icon.className = "fa-regular fa-eye";
+            }
+        }
+
+        function prefillDemoCredentials() {
+            const emailInput = document.getElementById("loginEmail");
+            const passInput = document.getElementById("loginPassword");
+            if (emailInput) emailInput.value = "researcher@rxr.studio";
+            if (passInput) passInput.value = "Password123!";
+            if (typeof showToast === "function") {
+                showToast("Demo researcher credentials pre-filled", "info");
+            }
+        }
+
+        async function handleLoginSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById("loginEmail").value.trim();
+            const password = document.getElementById("loginPassword").value;
+            const errAlert = document.getElementById("loginErrorAlert");
+            const errText = document.getElementById("loginErrorText");
+            const succAlert = document.getElementById("loginSuccessAlert");
+            const btn = document.getElementById("btnLoginSubmit");
+            const btnText = document.getElementById("btnLoginText");
+            const spinner = document.getElementById("btnLoginSpinner");
+
+            errAlert.classList.add("hidden");
+            succAlert.classList.add("hidden");
+            btn.disabled = true;
+            btnText.textContent = "Signing In...";
+            spinner.classList.remove("hidden");
+
+            const res = await window.AuthManager.login(email, password);
+            btn.disabled = false;
+            btnText.textContent = "Sign In to Studio";
+            spinner.classList.add("hidden");
+
+            if (res.success) {
+                succAlert.classList.remove("hidden");
+                if (typeof showToast === "function") {
+                    showToast(`Welcome back, ${res.user.name || "Researcher"}!`, "success");
+                }
+                setTimeout(() => {
+                    window.AuthManager.navigateTo("studio");
+                }, 400);
+            } else {
+                errText.textContent = res.error || "Authentication failed.";
+                errAlert.classList.remove("hidden");
+            }
+        }
+
+        async function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById("regName").value.trim();
+            const email = document.getElementById("regEmail").value.trim();
+            const password = document.getElementById("regPassword").value;
+            const errAlert = document.getElementById("regErrorAlert");
+            const errText = document.getElementById("regErrorText");
+            const succAlert = document.getElementById("regSuccessAlert");
+            const btn = document.getElementById("btnRegSubmit");
+            const btnText = document.getElementById("btnRegText");
+            const spinner = document.getElementById("btnRegSpinner");
+
+            errAlert.classList.add("hidden");
+            succAlert.classList.add("hidden");
+            btn.disabled = true;
+            btnText.textContent = "Creating Account...";
+            spinner.classList.remove("hidden");
+
+            const res = await window.AuthManager.register(email, password, name);
+            btn.disabled = false;
+            btnText.textContent = "Register & Launch Studio";
+            spinner.classList.add("hidden");
+
+            if (res.success) {
+                succAlert.classList.remove("hidden");
+                if (typeof showToast === "function") {
+                    showToast(`Account created for ${res.user.name}!`, "success");
+                }
+                setTimeout(() => {
+                    window.AuthManager.navigateTo("studio");
+                }, 400);
+            } else {
+                errText.textContent = res.error || "Registration failed.";
+                errAlert.classList.remove("hidden");
+            }
+        }
+
+        // Ambient Cursor Follower Animation
+        (function initCursorFollower() {
+            const bubble = document.getElementById("cursorAmbientBubble");
+            if (!bubble) return;
+            if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+            if (window.matchMedia("(pointer: coarse)").matches) return;
+
+            let targetX = window.innerWidth / 2;
+            let targetY = window.innerHeight / 2;
+            let currX = targetX;
+            let currY = targetY;
+            let isMoving = false;
+
+            window.addEventListener("pointermove", (e) => {
+                targetX = e.clientX;
+                targetY = e.clientY;
+                if (!isMoving) {
+                    isMoving = true;
+                    bubble.classList.add("active");
+                }
+            }, { passive: true });
+
+            function renderCursor() {
+                currX += (targetX - currX) * 0.12;
+                currY += (targetY - currY) * 0.12;
+                bubble.style.transform = `translate3d(${currX}px, ${currY}px, 0)`;
+                requestAnimationFrame(renderCursor);
+            }
+            requestAnimationFrame(renderCursor);
+        })();
+    </script>
+
+    <!-- Application Modules -->
+    <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
