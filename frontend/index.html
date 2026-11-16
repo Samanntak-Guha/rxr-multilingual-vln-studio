@@ -377,6 +377,93 @@
             </div>
         </section>
 
+        <!-- Languages & VLN Metrics Section -->
+        <section id="specsSection" class="max-w-[1400px] mx-auto px-6 py-16 border-t border-[#394144]/60">
+            <div class="text-center max-w-2xl mx-auto mb-12">
+                <span class="text-xs font-mono uppercase tracking-wider text-[#55BFD0]">Evaluation & Benchmarks</span>
+                <h2 class="text-2xl sm:text-3xl font-bold text-[#F0EEE7] mt-2 mb-3">Multilingual Capabilities & VLN Metrics</h2>
+                <p class="text-xs sm:text-sm text-[#A8ADA9]">Rigorous benchmarking across multilingual natural language instructions and standard embodied agent evaluation criteria.</p>
+            </div>
+
+            <!-- Linguistic Diversity Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 hover:border-[#55BFD0]/60 transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2 py-0.5 text-[11px] font-mono rounded bg-[#1b2022] text-[#55BFD0] border border-[#394144]">en-US</span>
+                        <i class="fa-solid fa-language text-[#55BFD0]"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2">English Instruction Parsing</h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
+                        Resolves starting viewpoints, destination rooms, and intermediate traversal constraints across complex spatial prepositions and landmarks.
+                    </p>
+                    <div class="text-[11px] font-mono text-[#F0EEE7] bg-[#1E2325] p-2.5 rounded border border-[#394144]">
+                        "Start in Bedroom 1, follow the pathway through the hallway, and reach the Kitchen."
+                    </div>
+                </div>
+
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 hover:border-[#72C9A2]/60 transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2 py-0.5 text-[11px] font-mono rounded bg-[#1b2022] text-[#72C9A2] border border-[#394144]">hi-IN</span>
+                        <i class="fa-solid fa-om text-[#72C9A2]"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2">Hindi Postpositional Parsing</h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
+                        Devanagari script tokenization with support for spatial postpositions ("से", "तक", "से होते हुए") and cross-modal attention weight visualization.
+                    </p>
+                    <div class="text-[11px] font-mono text-[#F0EEE7] bg-[#1E2325] p-2.5 rounded border border-[#394144]">
+                        "बैठक कक्ष में सोफा के पास से शुरू करें, गलियारे से होते हुए रसोईघर में रुकें।"
+                    </div>
+                </div>
+
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 hover:border-[#E5AD69]/60 transition">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="px-2 py-0.5 text-[11px] font-mono rounded bg-[#1b2022] text-[#E5AD69] border border-[#394144]">te-IN</span>
+                        <i class="fa-solid fa-feather text-[#E5AD69]"></i>
+                    </div>
+                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2">Telugu Directional Grammar</h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
+                        Agglutinative syntax resolution extracting start markers ("నుండి ప్రారంభించి"), intermediate paths ("గుండా"), and arrival goals ("వెళ్ళండి").
+                    </p>
+                    <div class="text-[11px] font-mono text-[#F0EEE7] bg-[#1E2325] p-2.5 rounded border border-[#394144]">
+                        "బెడ్‌రూమ్ 1 నుండి ప్రారంభించి, హాల్‌వే గుండా కిచెన్‌కు వెళ్ళండి."
+                    </div>
+                </div>
+            </div>
+
+            <!-- Embodied VLN Evaluation Metrics -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center">
+                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Success Rate</div>
+                    <div class="text-xl font-bold font-mono text-[#72C9A2]">SR</div>
+                    <div class="text-[11px] text-[#777F7D] mt-1">Binary stop within 1.5m of target viewpoint</div>
+                </div>
+
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center">
+                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Path Efficiency</div>
+                    <div class="text-xl font-bold font-mono text-[#55BFD0]">SPL</div>
+                    <div class="text-[11px] text-[#777F7D] mt-1">Success weighted by normalized shortest path length</div>
+                </div>
+
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center">
+                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Navigation Error</div>
+                    <div class="text-xl font-bold font-mono text-[#E5AD69]">NE (m)</div>
+                    <div class="text-[11px] text-[#777F7D] mt-1">Final Euclidean distance to goal viewpoint</div>
+                </div>
+
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center">
+                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Path Traversed</div>
+                    <div class="text-xl font-bold font-mono text-[#B8D96B]">PL (m)</div>
+                    <div class="text-[11px] text-[#777F7D] mt-1">Cumulative distance walked along graph edges</div>
+                </div>
+
+                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center col-span-2 sm:col-span-1">
+                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Trajectory Alignment</div>
+                    <div class="text-xl font-bold font-mono text-[#A8ADA9]">nDTW</div>
+                    <div class="text-[11px] text-[#777F7D] mt-1">Dynamic Time Warping against reference route</div>
+                </div>
+            </div>
+        </section>
+
         <!-- Final CTA Banner -->
         <section class="max-w-[1400px] mx-auto px-6 py-16 w-full">
             <div class="rounded-2xl bg-[#1E2325] border border-[#394144] p-8 sm:p-12 text-center relative overflow-hidden">
@@ -749,8 +836,8 @@
                         </div>
 
                         <div class="flex items-center justify-between gap-3 text-xs">
-                            <span class="text-[#A8ADA9] text-[11px]">3D Wall Transparency</span>
-                            <input id="wallOpacitySlider" type="range" min="0.04" max="0.55" step="0.02" value="0.18" oninput="update3DWallOpacity(this.value)" class="w-32 accent-[#55BFD0] cursor-pointer">
+                            <span class="text-[#A8ADA9] text-[11px]">3D Wall Opacity</span>
+                            <input id="wallOpacitySlider" type="range" min="0.10" max="0.85" step="0.02" value="0.38" oninput="update3DWallOpacity(this.value)" class="w-32 accent-[#55BFD0] cursor-pointer">
                         </div>
 
                         <div class="flex items-center justify-between text-[11px] font-mono bg-[#171A1C] px-2.5 py-1.5 rounded-lg border border-[#394144]">

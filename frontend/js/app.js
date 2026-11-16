@@ -167,10 +167,15 @@ let agentState = {
     headingDeg: 0,
     startNodeId: "vp_1",
     goalNodeId: "vp_4",
+    intermediateConstraints: [], // Array of intermediate room or viewpoint constraints
+    manualDropdownOverride: false, // Flag to prevent stale parser overwriting manual selections
     plannedPath: [], // Array of node IDs
     executedNodes: ["vp_1"],
     stepIndex: 0,
     isPlaying: false,
+    isWalking: false, // Smooth physical walking animation active
+    onHopComplete: null, // Callback upon arriving at target node
+    stepTimer: null,
     timer: null,
     activeTokenIndex: 0,
     walkingPace: 1.0, // Multiplier: 0.4x (Slow) to 3.0x (Fast)
@@ -206,7 +211,7 @@ let threeState = {
     wallMaterials: [],
     labelAnchors: [], // { pos: THREE.Vector3, text: string, type: 'room'|'node'|'landmark'|'door', color: string }
     cameraMode: "panorama", // 'panorama' | 'dollhouse' | 'map2d'
-    wallOpacity: 0.18,
+    wallOpacity: 0.38, // Rich architectural wall visibility (default 0.38)
     autoRotate: false,
     // Panorama First-Person Look State
     panoYaw: 0, // radians
@@ -610,20 +615,27 @@ function renderQuickRoomJumpBar() {
     map.rooms.forEach(r => {
         const isCurr = r.id === activeRoomId;
         const hasDoor = activeRoomId ? hasDirectDoorBetweenRooms(activeRoomId, r.id) : true;
+        const candidateNode = map.nodes.find(n => n.roomId === r.id);
+        const hasPath = candidateNode && currNode ? computeShortestPath(currNode.id, candidateNode.id).length > 1 : false;
+
         const btn = document.createElement("button");
 
         if (isCurr) {
-            btn.className = "px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-cyan-500/25 text-cyan-200 border border-cyan-400/60 shrink-0 transition";
-            btn.textContent = r.name;
+            btn.className = "px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#2B3234] text-[#B8D96B] border border-[#B8D96B]/60 shrink-0 transition flex items-center gap-1.5";
+            btn.innerHTML = `<i class="fa-solid fa-location-dot text-[10px] text-[#B8D96B]"></i><span>${r.name}</span>`;
             btn.title = "Current Room";
         } else if (hasDoor) {
-            btn.className = "px-2.5 py-1 rounded-lg text-[11px] font-medium bg-amber-500/15 text-amber-200 border border-amber-500/40 hover:bg-amber-500/25 shrink-0 transition flex items-center gap-1.5";
-            btn.innerHTML = `<i class="fa-solid fa-door-open text-[10px] text-amber-400"></i><span>${r.name}</span>`;
-            btn.title = `Doorway connected to ${r.name}`;
+            btn.className = "px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#1E2325] text-[#55BFD0] border border-[#55BFD0]/50 hover:bg-[#2B3234] shrink-0 transition flex items-center gap-1.5";
+            btn.innerHTML = `<i class="fa-solid fa-door-open text-[10px] text-[#55BFD0]"></i><span>${r.name}</span>`;
+            btn.title = `Direct doorway connected to ${r.name}`;
+        } else if (hasPath) {
+            btn.className = "px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#1E2325] text-[#72C9A2] border border-[#394144] hover:border-[#72C9A2]/50 shrink-0 transition flex items-center gap-1.5";
+            btn.innerHTML = `<i class="fa-solid fa-route text-[10px] text-[#72C9A2]"></i><span>${r.name}</span>`;
+            btn.title = `Navigate connected path to ${r.name}`;
         } else {
-            btn.className = "px-2.5 py-1 rounded-lg text-[11px] font-medium bg-slate-900/60 text-slate-500 border border-slate-800 hover:border-rose-500/30 shrink-0 transition flex items-center gap-1.5 opacity-65";
-            btn.innerHTML = `<i class="fa-solid fa-lock text-[10px] text-slate-500"></i><span>${r.name}</span>`;
-            btn.title = `No direct door from current room (Link nodes to create door)`;
+            btn.className = "px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#171A1C] text-[#777F7D] border border-[#394144] opacity-50 shrink-0 transition flex items-center gap-1.5";
+            btn.innerHTML = `<i class="fa-solid fa-lock text-[10px]"></i><span>${r.name}</span>`;
+            btn.title = `No connected path from current room`;
         }
 
         btn.onclick = () => switchPanoramaToRoom(r.id);
@@ -636,20 +648,6 @@ function switchPanoramaToRoom(roomId) {
     if (!map) return;
     const room = map.rooms.find(r => r.id === roomId);
     if (!room) return;
-
-    const currNode = map.nodes.find(n => n.id === agentState.currentNodeId);
-    const currRoomId = currNode ? currNode.roomId : null;
-
-    if (currRoomId && currRoomId !== roomId) {
-        const canTravel = hasDirectDoorBetweenRooms(currRoomId, roomId);
-        if (!canTravel) {
-            const currRoom = map.rooms.find(r => r.id === currRoomId);
-            const currName = currRoom ? currRoom.name : "Current Room";
-            showToast(`⛔ Travel Blocked: No door between ${currName} and ${room.name}! Link nodes in the Builder to create a door.`, "warn");
-            appendActionLog(`[BLOCKED] Travel to ${room.name} denied — no door connects ${currName} and ${room.name}`);
-            return;
-        }
-    }
 
     let targetNode = map.nodes.find(n => n.roomId === roomId);
     if (!targetNode && map.nodes.length > 0) {
@@ -767,58 +765,349 @@ function applyPresetInstruction() {
 
     if (presets[idx]) {
         document.getElementById("instructionInput").value = presets[idx].text;
-        if (map.nodes.some(n => n.id === presets[idx].start)) {
-            agentState.startNodeId = presets[idx].start;
-            const s = document.getElementById("startNodeSelect");
-            if (s) s.value = presets[idx].start;
-        }
-        if (map.nodes.some(n => n.id === presets[idx].goal)) {
-            agentState.goalNodeId = presets[idx].goal;
-            const g = document.getElementById("goalNodeSelect");
-            if (g) g.value = presets[idx].goal;
-        }
+        // Dynamically parse the preset instruction to extract start, destination, and intermediate constraints
+        applyParsedInstructionText();
+    } else {
+        renderTokenAttention(0);
+        resetSimulation();
     }
-    renderTokenAttention(0);
-    resetSimulation();
 }
 
 const instructionInputEl = document.getElementById("instructionInput");
+let instructionParseDebounceTimer = null;
 if (instructionInputEl) {
     instructionInputEl.addEventListener("input", () => {
-        inferGoalFromInstructionText();
+        clearTimeout(instructionParseDebounceTimer);
+        instructionParseDebounceTimer = setTimeout(() => {
+            applyParsedInstructionText();
+        }, 220);
         renderTokenAttention(agentState.stepIndex);
     });
 }
 
-function inferGoalFromInstructionText() {
-    const input = document.getElementById("instructionInput");
-    if (!input) return;
-    const text = input.value.toLowerCase();
-    const map = getActiveMap();
-    if (!map) return;
+function parseMultilingualInstruction(rawText, map) {
+    if (!rawText || !map) return null;
+    const text = rawText.trim();
+    if (!text) return null;
 
-    let bestRoom = null;
-    let lastPos = -1;
+    const lowerText = text.toLowerCase();
+    const isHindi = /[\u0900-\u097F]/.test(text);
+    const isTelugu = /[\u0C00-\u0C7F]/.test(text);
+    const detectedLang = isHindi ? "hi" : (isTelugu ? "te" : "en");
 
-    map.rooms.forEach(r => {
-        const namesToCheck = [r.name, r.name_hi, r.name_te, ...(r.landmarks || [])].filter(Boolean);
-        namesToCheck.forEach(term => {
-            const pos = text.lastIndexOf(term.toLowerCase());
-            if (pos > lastPos) {
-                lastPos = pos;
-                bestRoom = r;
+    // Build entity lexicon from active map
+    const lexicon = [];
+
+    // 1. Viewpoint Nodes (e.g. vp_1, vp_2, etc.)
+    (map.nodes || []).forEach(node => {
+        const nodeAliases = [
+            node.id.toLowerCase(),
+            `viewpoint ${node.id}`.toLowerCase(),
+            `node ${node.id}`.toLowerCase(),
+            `vp ${node.id.replace('vp_', '')}`.toLowerCase()
+        ];
+        if (node.label) nodeAliases.push(node.label.toLowerCase());
+        lexicon.push({
+            type: "node",
+            id: node.id,
+            nodeId: node.id,
+            roomId: node.roomId,
+            aliases: nodeAliases.filter(Boolean),
+            priority: 100 // Highest priority for exact viewpoint IDs
+        });
+    });
+
+    // 2. Rooms & Structural Spaces
+    (map.rooms || []).forEach(room => {
+        const roomAliases = [
+            room.name ? room.name.toLowerCase() : null,
+            room.id ? room.id.toLowerCase() : null,
+            room.name_hi ? room.name_hi.trim() : null,
+            room.name_te ? room.name_te.trim() : null
+        ].filter(Boolean);
+
+        if (room.name_hi) {
+            const hi = room.name_hi.trim();
+            roomAliases.push(hi);
+            // Oblique inflection in Hindi: masculine nouns ending with -aa (\u093E) inflect to -e (\u0947) before postpositions
+            if (hi.endsWith('\u093E')) {
+                const stem = hi.slice(0, -1);
+                roomAliases.push(stem + '\u0947');     // e.g. गलियारा -> गलियारे
+                roomAliases.push(stem + '\u094B\u0902'); // e.g. गलियारों
+                roomAliases.push(stem);
+            }
+        }
+
+        if (room.name_te) {
+            const te = room.name_te.trim();
+            roomAliases.push(te);
+            roomAliases.push(te + 'లో');
+            roomAliases.push(te + 'కు');
+            roomAliases.push(te + 'కి');
+        }
+
+        if (room.name) {
+            const clean = room.name.toLowerCase().replace(/[\(\)]/g, '').trim();
+            roomAliases.push(clean);
+
+            // Generic aliases
+            if (clean.includes("bedroom")) {
+                roomAliases.push("bedroom", "bedroom 1", "bedroom1", "bed room", "bed room 1", "bedroom 2", "bedroom2");
+            }
+            if (clean.includes("hallway") || clean.includes("corridor")) {
+                roomAliases.push("hallway", "corridor", "hall", "central hallway", "pathway");
+            }
+            if (clean.includes("living")) {
+                roomAliases.push("living", "living room", "lounge");
+            }
+            if (clean.includes("kitchen")) {
+                roomAliases.push("kitchen");
+            }
+            if (clean.includes("dining")) {
+                roomAliases.push("dining", "dining room");
+            }
+            if (clean.includes("study")) {
+                roomAliases.push("study", "study room", "office");
+            }
+            if (clean.includes("balcony") || clean.includes("terrace")) {
+                roomAliases.push("balcony", "terrace");
+            }
+            if (clean.includes("bath")) {
+                roomAliases.push("bath", "bathroom", "washroom");
+            }
+
+            const numM = clean.match(/([a-z]+)\s*(\d+)/i);
+            if (numM) {
+                roomAliases.push(`${numM[1]} ${numM[2]}`);
+                roomAliases.push(`${numM[1]}${numM[2]}`);
+            }
+        }
+
+        const primaryNode = (map.nodes || []).find(n => n.roomId === room.id);
+
+        lexicon.push({
+            type: "room",
+            id: room.id,
+            nodeId: primaryNode ? primaryNode.id : null,
+            roomId: room.id,
+            room: room,
+            aliases: Array.from(new Set(roomAliases)),
+            priority: 50
+        });
+
+        // 3. Landmarks in this room
+        (room.landmarks || []).forEach(lm => {
+            lexicon.push({
+                type: "landmark",
+                id: lm,
+                nodeId: primaryNode ? primaryNode.id : null,
+                roomId: room.id,
+                room: room,
+                aliases: [lm.toLowerCase().trim()],
+                priority: 20
+            });
+        });
+    });
+
+    // Find occurrences of lexicon entries in the input text
+    const matches = [];
+    lexicon.forEach(entry => {
+        entry.aliases.forEach(alias => {
+            if (!alias || alias.length < 2) return;
+            const searchTarget = (isHindi || isTelugu) ? text : lowerText;
+            const needle = (isHindi || isTelugu) ? alias : alias.toLowerCase();
+            let pos = 0;
+            while (pos < searchTarget.length) {
+                const idx = searchTarget.indexOf(needle, pos);
+                if (idx === -1) break;
+
+                let valid = true;
+                if (!isHindi && !isTelugu) {
+                    const prevChar = idx > 0 ? searchTarget[idx - 1] : ' ';
+                    const nextChar = idx + needle.length < searchTarget.length ? searchTarget[idx + needle.length] : ' ';
+                    const boundaryChars = /[\s,.;:!?\-_'"\(\)\[\]\/]/;
+                    if (!boundaryChars.test(prevChar) || !boundaryChars.test(nextChar)) {
+                        if (entry.type !== "node") {
+                            valid = false;
+                        }
+                    }
+                }
+
+                if (valid) {
+                    matches.push({
+                        entry: entry,
+                        alias: needle,
+                        startIdx: idx,
+                        endIdx: idx + needle.length,
+                        priority: entry.priority + needle.length
+                    });
+                }
+                pos = idx + needle.length;
             }
         });
     });
 
-    if (bestRoom) {
-        const nodeInRoom = map.nodes.find(n => n.roomId === bestRoom.id);
-        if (nodeInRoom && nodeInRoom.id !== agentState.startNodeId) {
-            agentState.goalNodeId = nodeInRoom.id;
-            const g = document.getElementById("goalNodeSelect");
-            if (g) g.value = nodeInRoom.id;
-            renderCanvas();
+    if (matches.length === 0) return null;
+
+    matches.sort((a, b) => {
+        if (a.startIdx !== b.startIdx) return a.startIdx - b.startIdx;
+        return b.priority - a.priority;
+    });
+
+    const nonOverlapping = [];
+    matches.forEach(m => {
+        const conflict = nonOverlapping.some(prev =>
+            (m.startIdx >= prev.startIdx && m.startIdx < prev.endIdx) ||
+            (m.endIdx > prev.startIdx && m.endIdx <= prev.endIdx)
+        );
+        if (!conflict) {
+            nonOverlapping.push(m);
         }
+    });
+
+    if (nonOverlapping.length === 0) return null;
+
+    function getContextBefore(m, len = 40) {
+        const start = Math.max(0, m.startIdx - len);
+        return lowerText.substring(start, m.startIdx);
+    }
+    function getContextAfter(m, len = 40) {
+        const end = Math.min(lowerText.length, m.endIdx + len);
+        return lowerText.substring(m.endIdx, end);
+    }
+
+    nonOverlapping.forEach(m => {
+        const pre = getContextBefore(m);
+        const post = getContextAfter(m);
+
+        let role = null;
+
+        if (
+            /(?:through|via|past|pathway\s+through|path\s+through|by\s+way\s+of|across|pass\s+through)\s+(?:the\s+)?$/i.test(pre) ||
+            /^(?:\s+)?(?:area|corridor|passage)?\s*(?:से\s+होते\s+हुए|के\s+रास्ते|होकर|से\s+होकर|के\s+माध्यम\s+से)/i.test(post) ||
+            /^(?:\s+)?(?:గుండా|ద్వారా|మీదుగా|నుండి\s+దాటి)/i.test(post)
+        ) {
+            role = "intermediate";
+        } else if (
+            /(?:start(?:\s+in|\s+at|\s+from|\s+near|\s+beside)?|begin(?:\s+in|\s+at|\s+from)?|go\s+from|\bfrom|depart(?:\s+from)?|leave|exit)\s+(?:the\s+)?$/i.test(pre) ||
+            /^(?:\s+)?(?:से\s+शुरू|से\s+प्रारंभ|से\s+निकलो|से\s+आरंभ)/i.test(post) ||
+            /^(?:\s+)?(?:నుండి\s+ప్రారంభించి|నుంచి\s+ప్రారంభించి|నుండి\s+మొదలుపెట్టి)/i.test(post)
+        ) {
+            role = "start";
+        } else if (
+            /(?:to|reach|stop(?:\s+at|\s+in|\s+near)?|go\s+to|enter|head\s+to|arrive\s+at|destination\s+is)\s+(?:the\s+)?$/i.test(pre) ||
+            /^(?:\s+)?(?:तक\s+जाएं|पर\s+जाएं|में\s+जाएं|की\s+ओर\s+जाएं|जाएं|पहुंचें|में\s+रुकें|पर\s+रुकें)/i.test(post) ||
+            /^(?:\s+)?(?:కు\s+వెళ్ళండి|కి\s+వెళ్ళండి|చేరుకోండి|దగ్గరకు\s+వెళ్ళండి|ఆగండి)/i.test(post)
+        ) {
+            role = "goal";
+        }
+
+        m.role = role;
+    });
+
+    let assignedStart = null;
+    let assignedGoal = null;
+    const assignedIntermediates = [];
+
+    nonOverlapping.forEach(m => {
+        if (m.role === "start" && !assignedStart) assignedStart = m;
+        else if (m.role === "goal" && !assignedGoal) assignedGoal = m;
+        else if (m.role === "intermediate") assignedIntermediates.push(m);
+    });
+
+    const unassigned = nonOverlapping.filter(m => m !== assignedStart && m !== assignedGoal && !assignedIntermediates.includes(m));
+
+    if (unassigned.length > 0) {
+        if (!assignedStart && !assignedGoal) {
+            if (unassigned.length === 1) {
+                if (/start/i.test(lowerText) || /शुरू/i.test(text) || /ప్రారంభ/i.test(text)) {
+                    assignedStart = unassigned[0];
+                } else {
+                    assignedGoal = unassigned[0];
+                }
+            } else if (unassigned.length === 2) {
+                assignedStart = unassigned[0];
+                assignedGoal = unassigned[1];
+            } else {
+                assignedStart = unassigned[0];
+                assignedGoal = unassigned[unassigned.length - 1];
+                for (let i = 1; i < unassigned.length - 1; i++) {
+                    assignedIntermediates.push(unassigned[i]);
+                }
+            }
+        } else if (!assignedStart && assignedGoal) {
+            const beforeGoal = unassigned.filter(m => m.startIdx < assignedGoal.startIdx);
+            if (beforeGoal.length > 0) {
+                assignedStart = beforeGoal[0];
+                for (let i = 1; i < beforeGoal.length; i++) {
+                    assignedIntermediates.push(beforeGoal[i]);
+                }
+            } else {
+                assignedStart = unassigned[0];
+            }
+        } else if (assignedStart && !assignedGoal) {
+            const afterStart = unassigned.filter(m => m.startIdx > assignedStart.startIdx);
+            if (afterStart.length > 0) {
+                assignedGoal = afterStart[afterStart.length - 1];
+                for (let i = 0; i < afterStart.length - 1; i++) {
+                    assignedIntermediates.push(afterStart[i]);
+                }
+            } else {
+                assignedGoal = unassigned[0];
+            }
+        } else {
+            unassigned.forEach(m => assignedIntermediates.push(m));
+        }
+    }
+
+    return {
+        detectedLang,
+        startNodeId: assignedStart ? assignedStart.entry.nodeId : null,
+        goalNodeId: assignedGoal ? assignedGoal.entry.nodeId : null,
+        intermediateConstraints: assignedIntermediates.map(m => {
+            if (m.entry.type === "node") return m.entry.nodeId;
+            if (m.entry.type === "room") return m.entry.room;
+            return m.entry.roomId || m.entry.nodeId;
+        }).filter(Boolean)
+    };
+}
+
+function applyParsedInstructionText() {
+    const input = document.getElementById("instructionInput");
+    if (!input) return;
+    const text = input.value.trim();
+    const map = getActiveMap();
+    if (!map || !text) return;
+
+    const parsed = parseMultilingualInstruction(text, map);
+    if (!parsed) return;
+
+    let stateChanged = false;
+
+    if (parsed.startNodeId && map.nodes.some(n => n.id === parsed.startNodeId)) {
+        if (agentState.startNodeId !== parsed.startNodeId) {
+            agentState.startNodeId = parsed.startNodeId;
+            const startSel = document.getElementById("startNodeSelect");
+            if (startSel) startSel.value = parsed.startNodeId;
+            stateChanged = true;
+        }
+    }
+
+    if (parsed.goalNodeId && map.nodes.some(n => n.id === parsed.goalNodeId)) {
+        if (agentState.goalNodeId !== parsed.goalNodeId) {
+            agentState.goalNodeId = parsed.goalNodeId;
+            const goalSel = document.getElementById("goalNodeSelect");
+            if (goalSel) goalSel.value = parsed.goalNodeId;
+            stateChanged = true;
+        }
+    }
+
+    agentState.intermediateConstraints = parsed.intermediateConstraints || [];
+
+    if (stateChanged || agentState.intermediateConstraints.length > 0) {
+        agentState.manualDropdownOverride = false;
+        agentState.plannedPath = computeConstrainedPath(agentState.startNodeId, agentState.goalNodeId, agentState.intermediateConstraints);
+        resetSimulation(true);
     }
 }
 
@@ -916,9 +1205,14 @@ function populateStartGoalDropdowns() {
 }
 
 function updateStartGoalNodes() {
-    agentState.startNodeId = document.getElementById("startNodeSelect").value;
-    agentState.goalNodeId = document.getElementById("goalNodeSelect").value;
-    resetSimulation();
+    agentState.manualDropdownOverride = true;
+    const startSel = document.getElementById("startNodeSelect");
+    const goalSel = document.getElementById("goalNodeSelect");
+    if (startSel) agentState.startNodeId = startSel.value;
+    if (goalSel) agentState.goalNodeId = goalSel.value;
+    agentState.intermediateConstraints = [];
+    agentState.plannedPath = computeConstrainedPath(agentState.startNodeId, agentState.goalNodeId, []);
+    resetSimulation(true);
 }
 
 function computeShortestPath(startId, goalId) {
@@ -975,14 +1269,237 @@ function computeShortestPath(startId, goalId) {
     return path;
 }
 
-function resetSimulation() {
+function calculatePathDistance(pathNodeIds, map) {
+    if (!pathNodeIds || pathNodeIds.length <= 1 || !map) return 0;
+    let dist = 0;
+    for (let i = 1; i < pathNodeIds.length; i++) {
+        const n1 = map.nodes.find(n => n.id === pathNodeIds[i - 1]);
+        const n2 = map.nodes.find(n => n.id === pathNodeIds[i]);
+        if (n1 && n2) {
+            dist += Math.hypot(n2.x - n1.x, n2.y - n1.y);
+        }
+    }
+    return dist;
+}
+
+function computeConstrainedPath(startNodeId, goalNodeId, intermediateConstraints = []) {
+    const map = getActiveMap();
+    if (!map || !startNodeId || !goalNodeId) return [];
+    if (!intermediateConstraints || intermediateConstraints.length === 0) {
+        return computeShortestPath(startNodeId, goalNodeId);
+    }
+
+    let currentFromId = startNodeId;
+    const fullPath = [startNodeId];
+
+    for (let c = 0; c < intermediateConstraints.length; c++) {
+        const constraint = intermediateConstraints[c];
+        let candidateNodeIds = [];
+        let constraintName = "";
+
+        if (typeof constraint === "string") {
+            if (map.nodes.some(n => n.id === constraint)) {
+                candidateNodeIds = [constraint];
+                constraintName = constraint;
+            } else {
+                const room = map.rooms.find(r => r.id === constraint || r.name.toLowerCase() === constraint.toLowerCase());
+                if (room) {
+                    candidateNodeIds = map.nodes.filter(n => n.roomId === room.id).map(n => n.id);
+                    constraintName = room.name;
+                }
+            }
+        } else if (constraint && constraint.id) {
+            candidateNodeIds = map.nodes.filter(n => n.roomId === constraint.id).map(n => n.id);
+            constraintName = constraint.name || constraint.id;
+        }
+
+        if (candidateNodeIds.length === 0) continue;
+
+        let nextTargetCandidates = [];
+        if (c < intermediateConstraints.length - 1) {
+            const nextC = intermediateConstraints[c + 1];
+            if (typeof nextC === "string" && map.nodes.some(n => n.id === nextC)) {
+                nextTargetCandidates = [nextC];
+            } else {
+                const nextRoom = map.rooms.find(r => (nextC.id && r.id === nextC.id) || r.name.toLowerCase() === (nextC.name || nextC).toLowerCase());
+                if (nextRoom) {
+                    nextTargetCandidates = map.nodes.filter(n => n.roomId === nextRoom.id).map(n => n.id);
+                }
+            }
+        }
+        if (nextTargetCandidates.length === 0) {
+            nextTargetCandidates = [goalNodeId];
+        }
+
+        let bestSubPath = null;
+        let bestTargetNode = null;
+        let minTotalCost = Infinity;
+
+        candidateNodeIds.forEach(candId => {
+            const p1 = computeShortestPath(currentFromId, candId);
+            if (p1.length > 0 && p1[p1.length - 1] === candId) {
+                nextTargetCandidates.forEach(nextTgt => {
+                    const p2 = computeShortestPath(candId, nextTgt);
+                    if (p2.length > 0 && p2[p2.length - 1] === nextTgt) {
+                        const totalCost = calculatePathDistance(p1, map) + calculatePathDistance(p2, map);
+                        if (totalCost < minTotalCost) {
+                            minTotalCost = totalCost;
+                            bestSubPath = p1;
+                            bestTargetNode = candId;
+                        }
+                    }
+                });
+            }
+        });
+
+        if (!bestSubPath || bestSubPath.length === 0 || bestSubPath[bestSubPath.length - 1] !== bestTargetNode) {
+            showToast(`Requested route through "${constraintName}" is not available on this map.`, "warn");
+            appendActionLog(`[WARNING] Route constraint through "${constraintName}" could not be satisfied on current graph.`);
+            const direct = computeShortestPath(currentFromId, goalNodeId);
+            if (direct.length > 1) {
+                for (let k = 1; k < direct.length; k++) fullPath.push(direct[k]);
+            }
+            return fullPath;
+        }
+
+        for (let k = 1; k < bestSubPath.length; k++) {
+            fullPath.push(bestSubPath[k]);
+        }
+        currentFromId = bestTargetNode;
+    }
+
+    if (currentFromId !== goalNodeId) {
+        const finalSubPath = computeShortestPath(currentFromId, goalNodeId);
+        if (finalSubPath.length > 1) {
+            for (let k = 1; k < finalSubPath.length; k++) {
+                fullPath.push(finalSubPath[k]);
+            }
+        }
+    }
+
+    return fullPath;
+}
+
+function walkSingleHop(fromNodeId, toNodeId, onDone) {
+    const map = getActiveMap();
+    if (!map) return;
+    const fromNode = map.nodes.find(n => n.id === fromNodeId);
+    const toNode = map.nodes.find(n => n.id === toNodeId);
+    if (!fromNode || !toNode) {
+        if (onDone) onDone();
+        return;
+    }
+
+    const isDifferentRoom = fromNode.roomId !== toNode.roomId;
+    let door = null;
+    if (isDifferentRoom) {
+        door = (threeState.doorPoints2D ? threeState.doorPoints2D.find(d =>
+            (d.roomUId === fromNode.roomId && d.roomVId === toNode.roomId) ||
+            (d.roomUId === toNode.roomId && d.roomVId === fromNode.roomId) ||
+            (d.uId === fromNode.id && d.vId === toNode.id) ||
+            (d.uId === toNode.id && d.vId === fromNode.id)
+        ) : null);
+
+        if (!door) {
+            const hit = intersectSegmentWithRect(fromNode.x, fromNode.y, toNode.x, toNode.y,
+                map.rooms.find(r => r.id === fromNode.roomId) || { x: 0, y: 0, w: 100, h: 100 });
+            if (hit) door = hit;
+        }
+    }
+
+    threeState.walkWaypoints = [];
+    threeState.currentWaypointIndex = 0;
+
+    if (door) {
+        // Multi-waypoint continuous walk: Approach doorway -> Step across threshold -> Walk to destination
+        const pDoor = map2DTo3D(door.x, door.y);
+        const yawToDoor = -(Math.atan2(door.y - fromNode.y, door.x - fromNode.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2;
+        threeState.walkWaypoints.push({
+            x3D: pDoor.x,
+            z3D: pDoor.z,
+            x2D: door.x,
+            y2D: door.y,
+            yaw: yawToDoor,
+            isDoorway: true
+        });
+
+        const pTarget = map2DTo3D(toNode.x, toNode.y);
+        const yawToTarget = -(Math.atan2(toNode.y - door.y, toNode.x - door.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2;
+        threeState.walkWaypoints.push({
+            x3D: pTarget.x,
+            z3D: pTarget.z,
+            x2D: toNode.x,
+            y2D: toNode.y,
+            yaw: yawToTarget,
+            isFinal: true,
+            targetNodeId: toNode.id
+        });
+
+        threeState.camDesiredPos.set(pDoor.x, 1.55, pDoor.z);
+        threeState.orbitDesiredTarget.set(pDoor.x, 0.9, pDoor.z);
+        threeState.desiredPanoYaw = yawToDoor;
+        agentState.targetX = door.x;
+        agentState.targetY = door.y;
+        agentState.headingDeg = Math.round(Math.atan2(door.y - fromNode.y, door.x - fromNode.x) * 180 / Math.PI);
+    } else {
+        const pTarget = map2DTo3D(toNode.x, toNode.y);
+        const yawToTarget = -(Math.atan2(toNode.y - fromNode.y, toNode.x - fromNode.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2;
+        threeState.walkWaypoints.push({
+            x3D: pTarget.x,
+            z3D: pTarget.z,
+            x2D: toNode.x,
+            y2D: toNode.y,
+            yaw: yawToTarget,
+            isFinal: true,
+            targetNodeId: toNode.id
+        });
+
+        threeState.camDesiredPos.set(pTarget.x, 1.55, pTarget.z);
+        threeState.orbitDesiredTarget.set(pTarget.x, 0.9, pTarget.z);
+        threeState.desiredPanoYaw = yawToTarget;
+        agentState.targetX = toNode.x;
+        agentState.targetY = toNode.y;
+        agentState.headingDeg = Math.round(Math.atan2(toNode.y - fromNode.y, toNode.x - fromNode.x) * 180 / Math.PI);
+    }
+
+    agentState.isWalking = true;
+    agentState.onHopComplete = () => {
+        agentState.isWalking = false;
+        agentState.currentNodeId = toNode.id;
+        if (agentState.executedNodes[agentState.executedNodes.length - 1] !== toNode.id) {
+            agentState.executedNodes.push(toNode.id);
+        }
+
+        const prevRoom = map.rooms.find(r => r.id === fromNode.roomId);
+        const targetRoom = map.rooms.find(r => r.id === toNode.roomId);
+        const crossedDoor = isDifferentRoom ? ` [Through Doorway → ${targetRoom ? targetRoom.name : "Room"}]` : "";
+        const angle = Math.round(Math.atan2(toNode.y - fromNode.y, toNode.x - fromNode.x) * 180 / Math.PI);
+        const turnDiff = ((angle - agentState.headingDeg + 540) % 360) - 180;
+        const turnAction = Math.abs(turnDiff) < 25 ? "FORWARD" : (turnDiff > 0 ? "TURN_RIGHT + FORWARD" : "TURN_LEFT + FORWARD");
+
+        appendActionLog(`[STEP ${agentState.stepIndex + 1}] ${turnAction} → ${toNode.id}${crossedDoor}`);
+        updateMetricsDisplay(toNode.id === agentState.goalNodeId);
+        renderCanvas();
+        update3DTrajectoryAndHighlights();
+        syncAgentTo3DScene(false);
+        renderQuickRoomJumpBar();
+
+        if (onDone) onDone();
+    };
+}
+
+function resetSimulation(previewOnly = false) {
     stopSimulationTimer();
     const map = getActiveMap();
     if (!map) return;
-    const startNode = map.nodes.find(n => n.id === agentState.startNodeId) || map.nodes[0];
 
-    agentState.plannedPath = computeShortestPath(agentState.startNodeId, agentState.goalNodeId);
+    if (!agentState.plannedPath || agentState.plannedPath.length === 0 || !previewOnly) {
+        agentState.plannedPath = computeConstrainedPath(agentState.startNodeId, agentState.goalNodeId, agentState.intermediateConstraints || []);
+    }
+
     agentState.stepIndex = 0;
+    agentState.isWalking = false;
+    const startNode = map.nodes.find(n => n.id === agentState.startNodeId) || map.nodes[0];
     agentState.executedNodes = startNode ? [startNode.id] : [];
 
     if (startNode) {
@@ -1001,7 +1518,10 @@ function resetSimulation() {
     }
 
     clearActionLog();
-    appendActionLog(`[READY] Start: ${agentState.startNodeId} → Target: ${agentState.goalNodeId} (${agentState.plannedPath.length - 1} hops)`);
+    const constraintDesc = (agentState.intermediateConstraints && agentState.intermediateConstraints.length > 0)
+        ? ` [Via: ${agentState.intermediateConstraints.map(c => c.name || c.id || c).join(", ")}]`
+        : "";
+    appendActionLog(`[READY] Start: ${agentState.startNodeId} → Target: ${agentState.goalNodeId}${constraintDesc} (${Math.max(0, agentState.plannedPath.length - 1)} hops)`);
     renderTokenAttention(0);
     updateMetricsDisplay();
     renderCanvas();
@@ -1013,6 +1533,8 @@ function resetSimulation() {
 function stepSimulation() {
     const map = getActiveMap();
     if (!map) return false;
+    if (agentState.isWalking) return false;
+
     if (agentState.plannedPath.length <= 1) {
         showToast("No connected path between Start and Goal viewpoints! Link nodes in the Builder.", "warn");
         return false;
@@ -1022,42 +1544,26 @@ function stepSimulation() {
         appendActionLog(`[STOP] Goal viewpoint ${agentState.goalNodeId} reached! Navigation Success.`);
         stopSimulationTimer();
         updateMetricsDisplay(true);
+        showToast("Goal reached! Navigation Success.", "success");
         return false;
     }
 
-    const prevNode = map.nodes.find(n => n.id === agentState.plannedPath[agentState.stepIndex]);
-    agentState.stepIndex++;
-    const nextNodeId = agentState.plannedPath[agentState.stepIndex];
-    const nextNode = map.nodes.find(n => n.id === nextNodeId);
+    const currNodeId = agentState.plannedPath[agentState.stepIndex];
+    const nextNodeId = agentState.plannedPath[agentState.stepIndex + 1];
 
-    if (nextNode && prevNode) {
-        const angle = Math.round(Math.atan2(nextNode.y - prevNode.y, nextNode.x - prevNode.x) * 180 / Math.PI);
-        const turnDiff = ((angle - agentState.headingDeg + 540) % 360) - 180;
-        const turnAction = Math.abs(turnDiff) < 25 ? "FORWARD" : (turnDiff > 0 ? "TURN_RIGHT + FORWARD" : "TURN_LEFT + FORWARD");
+    walkSingleHop(currNodeId, nextNodeId, () => {
+        agentState.stepIndex++;
+        renderTokenAttention(agentState.stepIndex);
+        const isDone = agentState.stepIndex >= agentState.plannedPath.length - 1;
+        if (isDone) {
+            appendActionLog(`[STOP] Agent called STOP action in target room. SR = 100%`);
+            stopSimulationTimer();
+            updateMetricsDisplay(true);
+            showToast("Goal reached! Navigation Success.", "success");
+        }
+    });
 
-        agentState.headingDeg = angle;
-        agentState.currentNodeId = nextNode.id;
-        agentState.targetX = nextNode.x;
-        agentState.targetY = nextNode.y;
-        agentState.executedNodes.push(nextNode.id);
-
-        const prevRoom = map.rooms.find(r => r.id === prevNode.roomId);
-        const nextRoom = map.rooms.find(r => r.id === nextNode.roomId);
-        const crossedDoor = prevRoom && nextRoom && prevRoom.id !== nextRoom.id ? ` [Through Doorway → ${nextRoom.name}]` : "";
-        appendActionLog(`[STEP ${agentState.stepIndex}] ${turnAction} → ${nextNode.id}${crossedDoor}`);
-    }
-
-    renderTokenAttention(agentState.stepIndex);
-    const isDone = agentState.stepIndex >= agentState.plannedPath.length - 1;
-    if (isDone) {
-        appendActionLog(`[STOP] Agent called STOP action in target room. SR = 100%`);
-    }
-    updateMetricsDisplay(isDone);
-    renderCanvas();
-    update3DTrajectoryAndHighlights();
-    syncAgentTo3DScene(false);
-    renderQuickRoomJumpBar();
-    return !isDone;
+    return true;
 }
 
 function runFullSimulation() {
@@ -1065,27 +1571,55 @@ function runFullSimulation() {
         stopSimulationTimer();
         return;
     }
-    agentState.plannedPath = computeShortestPath(agentState.startNodeId, agentState.goalNodeId);
-    if (agentState.stepIndex >= agentState.plannedPath.length - 1) {
-        resetSimulation();
+
+    if (agentState.plannedPath.length <= 1) {
+        agentState.plannedPath = computeConstrainedPath(agentState.startNodeId, agentState.goalNodeId, agentState.intermediateConstraints || []);
     }
+
+    if (agentState.stepIndex >= agentState.plannedPath.length - 1) {
+        resetSimulation(true);
+    }
+
     agentState.isPlaying = true;
     const btn = document.getElementById("btnRunNav");
     if (btn) btn.innerHTML = `<i class="fa-solid fa-pause"></i><span>Pause Navigation</span>`;
     const quickBtn = document.getElementById("btnQuickRunNav");
     if (quickBtn) quickBtn.innerHTML = `<i class="fa-solid fa-pause"></i><span>Pause Simulator</span>`;
 
-    const stepIntervalMs = Math.round(2200 / Math.max(0.35, agentState.walkingPace));
-    agentState.timer = setInterval(() => {
-        const keepGoing = stepSimulation();
-        if (!keepGoing) {
+    function runNextHop() {
+        if (!agentState.isPlaying) return;
+        if (agentState.stepIndex >= agentState.plannedPath.length - 1) {
             stopSimulationTimer();
+            return;
         }
-    }, stepIntervalMs);
+
+        const currNodeId = agentState.plannedPath[agentState.stepIndex];
+        const nextNodeId = agentState.plannedPath[agentState.stepIndex + 1];
+
+        walkSingleHop(currNodeId, nextNodeId, () => {
+            agentState.stepIndex++;
+            renderTokenAttention(agentState.stepIndex);
+            const isDone = agentState.stepIndex >= agentState.plannedPath.length - 1;
+            if (isDone) {
+                appendActionLog(`[STOP] Agent called STOP action in target room. SR = 100%`);
+                stopSimulationTimer();
+                updateMetricsDisplay(true);
+                showToast("Goal reached! Navigation Success.", "success");
+            } else if (agentState.isPlaying) {
+                agentState.stepTimer = setTimeout(runNextHop, Math.max(120, Math.round(350 / agentState.walkingPace)));
+            }
+        });
+    }
+
+    runNextHop();
 }
 
 function stopSimulationTimer() {
     agentState.isPlaying = false;
+    if (agentState.stepTimer) {
+        clearTimeout(agentState.stepTimer);
+        agentState.stepTimer = null;
+    }
     if (agentState.timer) {
         clearInterval(agentState.timer);
         agentState.timer = null;
@@ -1192,19 +1726,21 @@ function renderCanvas() {
     const showLandmarks = toggleLandmarksEl ? toggleLandmarksEl.checked : true;
     map.rooms.forEach(room => {
         const isGoalRoom = map.nodes.some(n => n.id === agentState.goalNodeId && n.roomId === room.id);
+        const isStartRoom = map.nodes.some(n => n.id === agentState.startNodeId && n.roomId === room.id);
         const isSelected = selectedEntity && selectedEntity.type === "room" && selectedEntity.id === room.id;
+        const semColorHex = getSemanticRoomColorHex(room);
 
         ctx.save();
-        ctx.fillStyle = hexToRgba(room.color || "#6366f1", 0.14);
-        ctx.strokeStyle = isSelected ? "#38bdf8" : (isGoalRoom ? "#10b981" : hexToRgba(room.color || "#6366f1", 0.65));
-        ctx.lineWidth = isSelected || isGoalRoom ? 2.5 : 1.5;
+        ctx.fillStyle = hexToRgba(semColorHex, isGoalRoom ? 0.32 : (isStartRoom ? 0.26 : 0.20));
+        ctx.strokeStyle = isSelected ? "#B8D96B" : (isGoalRoom ? "#72C9A2" : (isStartRoom ? "#55BFD0" : hexToRgba(semColorHex, 0.88)));
+        ctx.lineWidth = isSelected ? 3.0 : (isGoalRoom || isStartRoom ? 2.5 : 1.8);
 
         roundRect(ctx, room.x, room.y, room.w, room.h, 12);
         ctx.fill();
         ctx.stroke();
 
         const displayRoomName = getLocalizedRoomName(room);
-        ctx.fillStyle = hexToRgba(room.color || "#6366f1", 0.9);
+        ctx.fillStyle = hexToRgba(semColorHex, 0.95);
         ctx.font = "600 12px Inter, sans-serif";
         ctx.fillText(displayRoomName, room.x + 12, room.y + 22);
 
@@ -1509,6 +2045,47 @@ const VIEWPORT_PALETTE = {
     gridGuides: 0x59636B       // #59636B Grid and guides
 };
 
+// Semantic Architectural Room Color Palette
+const SEMANTIC_ROOM_PALETTE = {
+    bedroom: 0x4A6B82,    // #4A6B82 Muted blue
+    kitchen: 0x4E7D63,    // #4E7D63 Muted green
+    hallway: 0x99733E,    // #99733E Warm amber
+    corridor: 0x99733E,   // #99733E Warm amber
+    living: 0x3D757A,     // #3D757A Muted teal
+    lounge: 0x3D757A,     // #3D757A Muted teal
+    dining: 0x8A5647,     // #8A5647 Muted terracotta
+    study: 0x5D586F,      // #5D586F Muted violet-grey
+    office: 0x5D586F,     // #5D586F Muted violet-grey
+    balcony: 0x5C7872,    // #5C7872 Muted slate
+    terrace: 0x5C7872,    // #5C7872 Muted slate
+    bathroom: 0x447A85,   // #447A85 Muted cyan
+    washroom: 0x447A85,   // #447A85 Muted cyan
+    default: 0x5A6872     // #5A6872 Neutral slate
+};
+
+function getSemanticRoomColor(room) {
+    if (!room) return SEMANTIC_ROOM_PALETTE.default;
+    const nameLower = (room.name || "").toLowerCase();
+    const idLower = (room.id || "").toLowerCase();
+    for (const [key, color] of Object.entries(SEMANTIC_ROOM_PALETTE)) {
+        if (key === "default") continue;
+        if (nameLower.includes(key) || idLower.includes(key)) {
+            return color;
+        }
+    }
+    if (room.color) {
+        try {
+            return new THREE.Color(room.color).getHex();
+        } catch(e) {}
+    }
+    return SEMANTIC_ROOM_PALETTE.default;
+}
+
+function getSemanticRoomColorHex(room) {
+    const hexNum = getSemanticRoomColor(room);
+    return "#" + hexNum.toString(16).padStart(6, "0");
+}
+
 /***********************************************************************
  * 7. ACTUAL 3D MATTERPORT PANORAMA & DOLLHOUSE ENGINE (OPTIMIZED)
  ***********************************************************************/
@@ -1525,7 +2102,8 @@ function initThreeMatterportEngine() {
     scene.background = new THREE.Color(VIEWPORT_PALETTE.envBackground);
     scene.fog = new THREE.FogExp2(VIEWPORT_PALETTE.envBackground, 0.007);
 
-    const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 140);
+    // Near plane set to 0.05m to eliminate near-clipping black screen during doorway traversal
+    const camera = new THREE.PerspectiveCamera(75, w / h, 0.05, 140);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.25));
@@ -1628,7 +2206,7 @@ function rebuild3DMatterportScene() {
         threeState.worldGroup.add(globalGrid);
     }
 
-    // 2. Build 3D Rooms
+    // 2. Build 3D Rooms with Semantic Colors and Distinct Architectural Outlines
     map.rooms.forEach(room => {
         const roomGroup = new THREE.Group();
         const center2D = { x: room.x + room.w / 2, y: room.y + room.h / 2 };
@@ -1639,16 +2217,16 @@ function rebuild3DMatterportScene() {
 
         roomGroup.position.set(pos3D.x, 0, pos3D.z);
         const isGoalRoom = map.nodes.some(n => n.id === agentState.goalNodeId && n.roomId === room.id);
-        const roomHex = new THREE.Color(room.color || "#6366f1");
+        const isStartRoom = map.nodes.some(n => n.id === agentState.startNodeId && n.roomId === room.id);
+        const semanticHex = getSemanticRoomColor(room);
+        const roomHex = new THREE.Color(semanticHex);
 
-        // 2A. Interactive Floor Plate (Architectural Palette)
-        const floorBase = new THREE.Color(VIEWPORT_PALETTE.floor);
-        const floorColor = floorBase.clone().lerp(roomHex, 0.22);
+        // 2A. Interactive Floor Plate (Rich Architectural Palette & Outlines)
         const floorGeo = new THREE.PlaneGeometry(w3D, d3D);
         const floorMat = new THREE.MeshBasicMaterial({
-            color: floorColor,
+            color: roomHex,
             transparent: true,
-            opacity: isGoalRoom ? 0.36 : 0.22,
+            opacity: isGoalRoom ? 0.68 : (isStartRoom ? 0.58 : 0.48),
             side: THREE.DoubleSide,
             depthWrite: false
         });
@@ -1658,7 +2236,19 @@ function rebuild3DMatterportScene() {
         floorMesh.userData = { roomId: room.id };
         roomGroup.add(floorMesh);
         threeState.clickableHotspots.push(floorMesh);
-        threeState.roomFloorsById[room.id] = { mat: floorMat, baseColor: floorColor };
+        threeState.roomFloorsById[room.id] = { mat: floorMat, baseColor: roomHex };
+
+        // Floor Perimeter Outline for clear physical boundaries
+        const floorEdgesGeo = new THREE.EdgesGeometry(floorGeo);
+        const floorEdgesMat = new THREE.LineBasicMaterial({
+            color: isGoalRoom ? VIEWPORT_PALETTE.waypoints : (isStartRoom ? VIEWPORT_PALETTE.navigationPath : 0x394144),
+            transparent: true,
+            opacity: 0.95
+        });
+        const floorOutline = new THREE.LineSegments(floorEdgesGeo, floorEdgesMat);
+        floorOutline.rotation.x = -Math.PI / 2;
+        floorOutline.position.y = 0.015;
+        roomGroup.add(floorOutline);
 
         // 2B. Optimized Architectural Grid Lines
         if (showGrid) {
@@ -1668,7 +2258,7 @@ function rebuild3DMatterportScene() {
 
         // 2C. Fast Lambert Transparent 3D Room Enclosure (Architectural Walls)
         const boxGeo = new THREE.BoxGeometry(w3D, h3D, d3D);
-        const wallColor = new THREE.Color(VIEWPORT_PALETTE.walls).lerp(roomHex, 0.15);
+        const wallColor = new THREE.Color(VIEWPORT_PALETTE.walls).lerp(roomHex, 0.20);
         const wallMat = new THREE.MeshLambertMaterial({
             color: wallColor,
             transparent: true,
@@ -1681,12 +2271,12 @@ function rebuild3DMatterportScene() {
         boxMesh.position.y = h3D / 2;
         roomGroup.add(boxMesh);
 
-        // Architectural Wireframe Perimeter Cage
+        // Architectural Wireframe Perimeter Cage (Visible Outlines for Walls & Edges)
         const edgesGeo = new THREE.EdgesGeometry(boxGeo);
         const edgesMat = new THREE.LineBasicMaterial({
-            color: isGoalRoom ? VIEWPORT_PALETTE.waypoints : VIEWPORT_PALETTE.gridGuides,
+            color: isGoalRoom ? VIEWPORT_PALETTE.waypoints : (isStartRoom ? VIEWPORT_PALETTE.navigationPath : 0x59636B),
             transparent: true,
-            opacity: 0.85
+            opacity: 0.90
         });
         const wireframeCage = new THREE.LineSegments(edgesGeo, edgesMat);
         wireframeCage.position.y = h3D / 2;
@@ -1928,7 +2518,8 @@ function update3DTrajectoryAndHighlights() {
         if (!floorRef) return;
         const isActiveRoom = room.id === activeRoomId;
         const isGoalRoom = map.nodes.some(n => n.id === agentState.goalNodeId && n.roomId === room.id);
-        floorRef.mat.opacity = isActiveRoom ? 0.38 : (isGoalRoom ? 0.28 : 0.16);
+        const isStartRoom = map.nodes.some(n => n.id === agentState.startNodeId && n.roomId === room.id);
+        floorRef.mat.opacity = isActiveRoom ? 0.75 : (isGoalRoom ? 0.68 : (isStartRoom ? 0.58 : 0.48));
     });
 
     if (agentState.executedNodes.length > 1) {
@@ -1944,6 +2535,26 @@ function update3DTrajectoryAndHighlights() {
             const curve = new THREE.CatmullRomCurve3(pathPts);
             const tubeGeo = new THREE.TubeGeometry(curve, pathPts.length * 6, 0.065, 6, false);
             const tubeMat = new THREE.MeshBasicMaterial({ color: VIEWPORT_PALETTE.navigationPath });
+            const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
+            threeState.dynamicTrajectoryGroup.add(tubeMesh);
+        }
+    } else if (agentState.plannedPath && agentState.plannedPath.length > 1) {
+        const planPts = [];
+        agentState.plannedPath.forEach(nid => {
+            const n = map.nodes.find(node => node.id === nid);
+            if (n) {
+                const p = map2DTo3D(n.x, n.y);
+                planPts.push(new THREE.Vector3(p.x, 0.10, p.z));
+            }
+        });
+        if (planPts.length > 1) {
+            const curve = new THREE.CatmullRomCurve3(planPts);
+            const tubeGeo = new THREE.TubeGeometry(curve, planPts.length * 6, 0.035, 6, false);
+            const tubeMat = new THREE.MeshBasicMaterial({
+                color: VIEWPORT_PALETTE.navigationPath,
+                transparent: true,
+                opacity: 0.55
+            });
             const tubeMesh = new THREE.Mesh(tubeGeo, tubeMat);
             threeState.dynamicTrajectoryGroup.add(tubeMesh);
         }
@@ -2432,116 +3043,43 @@ function onClicked3DHotspot(nodeId, autoSwitchToPanorama = false, isDirectUserAc
     const targetNode = map.nodes.find(n => n.id === nodeId);
     if (!targetNode) return;
 
-    const prevNode = map.nodes.find(n => n.id === agentState.currentNodeId);
-
-    // Enforce doorway travel rule:
-    // If user clicked directly in simulator mode, check inter-room travel
-    if (isDirectUserAction && currentMode === "simulator" && prevNode && prevNode.id !== targetNode.id) {
-        const currRoomId = prevNode.roomId;
-        const targetRoomId = targetNode.roomId;
-        if (currRoomId && targetRoomId && currRoomId !== targetRoomId) {
-            const hasDoor = hasDirectDoorBetweenRooms(currRoomId, targetRoomId);
-            if (!hasDoor) {
-                const currRoom = map.rooms.find(r => r.id === currRoomId);
-                const targetRoom = map.rooms.find(r => r.id === targetRoomId);
-                const currName = currRoom ? currRoom.name : "Current Room";
-                const targetName = targetRoom ? targetRoom.name : "Target Room";
-                showToast(`⛔ Travel Blocked: No door between ${currName} and ${targetName}! Link nodes in the Builder to create a door.`, "warn");
-                appendActionLog(`[BLOCKED] Travel to ${targetNode.id} denied — no doorway between ${currName} and ${targetName}`);
-                return;
-            }
-        }
-    }
-
     if (autoSwitchToPanorama && threeState.cameraMode !== "panorama") {
         set3DCameraMode("panorama");
     }
 
-    const isDifferentRoom = prevNode && targetNode && prevNode.roomId !== targetNode.roomId;
-    let door = null;
-    if (isDifferentRoom) {
-        door = viaDoorPos2D || (threeState.doorPoints2D ? threeState.doorPoints2D.find(d =>
-            (d.roomUId === prevNode.roomId && d.roomVId === targetNode.roomId) ||
-            (d.roomUId === targetNode.roomId && d.roomVId === prevNode.roomId) ||
-            (d.uId === prevNode.id && d.vId === targetNode.id) ||
-            (d.uId === targetNode.id && d.vId === prevNode.id)
-        ) : null);
+    if (nodeId === agentState.currentNodeId) return;
+
+    // Plan connected path from current node to clicked target
+    const hopPath = computeShortestPath(agentState.currentNodeId, targetNode.id);
+    if (!hopPath || hopPath.length <= 1) {
+        const currNode = map.nodes.find(n => n.id === agentState.currentNodeId);
+        const currRoom = currNode ? map.rooms.find(r => r.id === currNode.roomId) : null;
+        const targetRoom = map.rooms.find(r => r.id === targetNode.roomId);
+        showToast(`No connected path from ${currRoom ? currRoom.name : agentState.currentNodeId} to ${targetRoom ? targetRoom.name : targetNode.id}!`, "warn");
+        return;
     }
 
-    // Build smooth architectural waypoints: approach door first, step across threshold, then enter room
-    threeState.walkWaypoints = [];
-    threeState.currentWaypointIndex = 0;
+    stopSimulationTimer();
 
-    if (door && prevNode) {
-        // Waypoint 1: Approach doorway
-        const pDoor = map2DTo3D(door.x, door.y);
-        const yawToDoor = -(Math.atan2(door.y - prevNode.y, door.x - prevNode.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2;
-        threeState.walkWaypoints.push({
-            x3D: pDoor.x,
-            z3D: pDoor.z,
-            x2D: door.x,
-            y2D: door.y,
-            yaw: yawToDoor,
-            isDoorway: true
-        });
-
-        // Waypoint 2: Step through doorway into target room viewpoint
-        const pTarget = map2DTo3D(targetNode.x, targetNode.y);
-        const yawToTarget = -(Math.atan2(targetNode.y - door.y, targetNode.x - door.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2;
-        threeState.walkWaypoints.push({
-            x3D: pTarget.x,
-            z3D: pTarget.z,
-            x2D: targetNode.x,
-            y2D: targetNode.y,
-            yaw: yawToTarget,
-            isFinal: true
-        });
-
-        threeState.camDesiredPos.set(pDoor.x, 1.55, pDoor.z);
-        threeState.orbitDesiredTarget.set(pDoor.x, 0.9, pDoor.z);
-        threeState.desiredPanoYaw = yawToDoor;
-        agentState.targetX = door.x;
-        agentState.targetY = door.y;
-        agentState.headingDeg = Math.round(Math.atan2(door.y - prevNode.y, door.x - prevNode.x) * 180 / Math.PI);
-    } else {
-        const pTarget = map2DTo3D(targetNode.x, targetNode.y);
-        const yawToTarget = prevNode
-            ? -(Math.atan2(targetNode.y - prevNode.y, targetNode.x - prevNode.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2
-            : -(agentState.headingDeg * Math.PI) / 180 + Math.PI / 2;
-
-        threeState.walkWaypoints.push({
-            x3D: pTarget.x,
-            z3D: pTarget.z,
-            x2D: targetNode.x,
-            y2D: targetNode.y,
-            yaw: yawToTarget,
-            isFinal: true
-        });
-
-        threeState.camDesiredPos.set(pTarget.x, 1.55, pTarget.z);
-        threeState.orbitDesiredTarget.set(pTarget.x, 0.9, pTarget.z);
-        threeState.desiredPanoYaw = yawToTarget;
-        agentState.targetX = targetNode.x;
-        agentState.targetY = targetNode.y;
-        if (prevNode) {
-            agentState.headingDeg = Math.round(Math.atan2(targetNode.y - prevNode.y, targetNode.x - prevNode.x) * 180 / Math.PI);
+    // Walk through each hop in hopPath continuously
+    let hopIndex = 0;
+    function walkNextInPath() {
+        if (hopIndex >= hopPath.length - 1) {
+            const finalRoom = map.rooms.find(r => r.id === targetNode.roomId);
+            showToast(`Arrived at ${finalRoom ? finalRoom.name : targetNode.id}`, "success");
+            return;
         }
-    }
-
-    agentState.currentNodeId = targetNode.id;
-    if (agentState.executedNodes[agentState.executedNodes.length - 1] !== targetNode.id) {
-        agentState.executedNodes.push(targetNode.id);
+        const u = hopPath[hopIndex];
+        const v = hopPath[hopIndex + 1];
+        hopIndex++;
+        walkSingleHop(u, v, () => {
+            walkNextInPath();
+        });
     }
 
     const room = map.rooms.find(r => r.id === targetNode.roomId);
-    const crossedDoor = isDifferentRoom ? " [Through Doorway]" : "";
-    appendActionLog(`[WALK] Moving to ${targetNode.id} (${room ? room.name : "Room"})${crossedDoor} at ${agentState.walkingPace.toFixed(1)}x pace`);
-    updateMetricsDisplay(targetNode.id === agentState.goalNodeId);
-    renderCanvas();
-    update3DTrajectoryAndHighlights();
-    syncAgentTo3DScene(false);
-    renderQuickRoomJumpBar();
     showToast(`Walking to ${room ? room.name : targetNode.id} (${agentState.walkingPace.toFixed(1)}x)`, "info");
+    walkNextInPath();
 }
 
 let lastThreeTimestamp = 0;
@@ -2553,11 +3091,8 @@ function animateThreeLoop(timestamp) {
     const dt = Math.min(0.05, Math.max(0.005, (timestamp - lastThreeTimestamp) / 1000));
     lastThreeTimestamp = timestamp;
 
-    // Linear physical walking speed (m/s):
-    // 1.0x = 2.5 m/s (natural steady walk)
-    // 0.4x = 1.0 m/s (steady, smooth, relaxed slow walk, never standing in place)
-    // 2.2x = 5.5 m/s (fast brisk walk)
-    const walkSpeed = 2.5 * Math.max(0.35, agentState.walkingPace);
+    // Linear physical walking speed (m/s) scaled proportionally by walkingPace slider
+    const walkSpeed = 2.8 * Math.max(0.35, agentState.walkingPace);
 
     // Multi-stage waypoint navigation (e.g. Room A -> Doorway Portal -> Room B)
     if (threeState.walkWaypoints && threeState.walkWaypoints.length > threeState.currentWaypointIndex) {
@@ -2580,7 +3115,6 @@ function animateThreeLoop(timestamp) {
         const stepDist = Math.min(dist3D, walkSpeed * dt);
         threeState.camCurrentPos.x += (dx3D / dist3D) * stepDist;
         threeState.camCurrentPos.z += (dz3D / dist3D) * stepDist;
-        // Head bobbing advances in sync with distance walked
         agentState.walkBobPhase += (stepDist / 0.5) * Math.PI * 2;
     } else {
         threeState.camCurrentPos.x = threeState.camDesiredPos.x;
@@ -2598,9 +3132,14 @@ function animateThreeLoop(timestamp) {
                 threeState.desiredPanoYaw = nextWp.yaw;
             }
         } else {
-            // Reached final viewpoint
+            // Reached final viewpoint of this hop
             threeState.walkWaypoints = [];
             threeState.desiredPanoYaw = undefined;
+            if (agentState.isWalking && agentState.onHopComplete) {
+                const cb = agentState.onHopComplete;
+                agentState.onHopComplete = null;
+                cb();
+            }
         }
     }
 
@@ -2613,15 +3152,13 @@ function animateThreeLoop(timestamp) {
             const step2D = Math.min(dist2D, speed2D * dt);
             agentState.x += (dx2d / dist2D) * step2D;
             agentState.y += (dy2d / dist2D) * step2D;
-            if (threeState.cameraMode === "map2d") {
-                renderCanvas();
-            }
+            agentState.headingDeg = Math.round(Math.atan2(dy2d, dx2d) * 180 / Math.PI);
         } else {
             agentState.x = agentState.targetX;
             agentState.y = agentState.targetY;
-            if (threeState.cameraMode === "map2d") {
-                renderCanvas();
-            }
+        }
+        if (dist2D > 0.5 || isWalking) {
+            renderCanvas();
         }
     }
 
