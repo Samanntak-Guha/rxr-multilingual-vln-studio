@@ -1449,8 +1449,8 @@
       {
         "id": "r_custom_7859",
         "name": "Bedroom",
-        "x": 121,
-        "y": 151,
+        "x": 111,
+        "y": 170,
         "w": 170,
         "h": 130,
         "color": "#55BFD0",
@@ -1462,8 +1462,8 @@
       {
         "id": "r_custom_8259",
         "name": "Hallway",
-        "x": 293,
-        "y": 210,
+        "x": 282,
+        "y": 205,
         "w": 170,
         "h": 130,
         "color": "#647D75",
@@ -1474,8 +1474,8 @@
       {
         "id": "r_custom_6147",
         "name": "Kitchen",
-        "x": 122,
-        "y": 282,
+        "x": 112,
+        "y": 299,
         "w": 170,
         "h": 130,
         "color": "#E5AD69",
@@ -1488,8 +1488,8 @@
       {
         "id": "r_custom_3619",
         "name": "Garage",
-        "x": 465,
-        "y": 210,
+        "x": 453,
+        "y": 220,
         "w": 170,
         "h": 130,
         "color": "#B8D96B",
@@ -1502,29 +1502,29 @@
     "nodes": [
       {
         "id": "vp_1",
-        "x": 206,
-        "y": 216,
+        "x": 196,
+        "y": 235,
         "roomId": "r_custom_7859",
         "label": "Bedroom Center"
       },
       {
         "id": "vp_2",
-        "x": 378,
-        "y": 275,
+        "x": 367,
+        "y": 270,
         "roomId": "r_custom_8259",
         "label": "Hallway Center"
       },
       {
         "id": "vp_3",
-        "x": 207,
-        "y": 347,
+        "x": 195,
+        "y": 363,
         "roomId": "r_custom_6147",
         "label": "Kitchen Center"
       },
       {
         "id": "vp_4",
-        "x": 550,
-        "y": 275,
+        "x": 543,
+        "y": 292,
         "roomId": "r_custom_3619",
         "label": "Garage Center"
       }

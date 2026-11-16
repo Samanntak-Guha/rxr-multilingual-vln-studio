@@ -327,7 +327,7 @@ window.onload = async function () {
     setupCanvasEvents();
     handleResize();
     window.addEventListener("resize", handleResize);
-    animateThreeLoop();
+    requestAnimationFrame(animateThreeLoop);
 
     // Check backend connection & synchronize maps
     const online = await checkBackendConnection();
@@ -1495,6 +1495,12 @@ function walkSingleHop(fromNodeId, toNodeId, onDone) {
         ];
     }
 
+    // Ensure panoramic background for current and upcoming rooms are preloaded & cached
+    PanoramaManager.preloadRoute(agentState.plannedPath, map);
+    if (isDifferentRoom) {
+        PanoramaManager.startTransition(fromNode.roomId, toNode.roomId, map);
+    }
+
     const firstWp = threeState.walkWaypoints[0];
     threeState.camDesiredPos.set(firstWp.x3D, 1.55, firstWp.z3D);
     threeState.orbitDesiredTarget.set(firstWp.x3D, 0.9, firstWp.z3D);
@@ -1517,6 +1523,9 @@ function walkSingleHop(fromNodeId, toNodeId, onDone) {
         const angle = Math.round(Math.atan2(toNode.y - fromNode.y, toNode.x - fromNode.x) * 180 / Math.PI);
         const turnDiff = ((angle - agentState.headingDeg + 540) % 360) - 180;
         const turnAction = Math.abs(turnDiff) < 25 ? "FORWARD" : (turnDiff > 0 ? "TURN_RIGHT + FORWARD" : "TURN_LEFT + FORWARD");
+
+        // Complete panorama transition cleanly
+        PanoramaManager.completeTransition(map);
 
         appendActionLog(`[STEP ${agentState.stepIndex + 1}] ${turnAction} → ${toNode.id}${crossedDoor}`);
         updateMetricsDisplay(toNode.id === agentState.goalNodeId);
@@ -1552,6 +1561,8 @@ function resetSimulation(previewOnly = false) {
         agentState.y = startNode.y;
         agentState.targetX = startNode.x;
         agentState.targetY = startNode.y;
+        PanoramaManager.preloadRoute(agentState.plannedPath, map);
+        PanoramaManager.setActiveRoom(startNode.roomId, map);
     }
 
     if (agentState.plannedPath.length > 1) {
@@ -2131,6 +2142,596 @@ function getSemanticRoomColorHex(room) {
 }
 
 /***********************************************************************
+ * 6B. DUAL-SPHERE 360° PANORAMA & ARCHITECTURAL TEXTURE ENGINE
+ * Provides persistent, smooth, crossfaded 360° panorama room navigation,
+ * preloading, texture caching, and eliminates black screens & flickering.
+ ***********************************************************************/
+const PanoramaManager = {
+    cache: new Map(), // roomId -> THREE.CanvasTexture
+    currentSphere: null,
+    transitionSphere: null,
+    group: null,
+    activeRoomId: null,
+    targetRoomId: null,
+    transitionAlpha: 0.0,
+    isTransitioning: false,
+    failedLoads: new Set(),
+
+    init(scene) {
+        if (this.group) return;
+        this.group = new THREE.Group();
+        this.group.name = "panoramaSpheresGroup";
+
+        const radius = 55;
+        // Inverted sphere (scale -1, 1, 1) for interior viewing
+        const currentGeo = new THREE.SphereGeometry(radius, 48, 32);
+        currentGeo.scale(-1, 1, 1);
+        const currentMat = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 1.0,
+            depthWrite: false,
+            side: THREE.FrontSide
+        });
+        this.currentSphere = new THREE.Mesh(currentGeo, currentMat);
+        this.currentSphere.renderOrder = -100;
+        this.group.add(this.currentSphere);
+
+        const transGeo = new THREE.SphereGeometry(radius * 0.998, 48, 32);
+        transGeo.scale(-1, 1, 1);
+        const transMat = new THREE.MeshBasicMaterial({
+            transparent: true,
+            opacity: 0.0,
+            depthWrite: false,
+            side: THREE.FrontSide
+        });
+        this.transitionSphere = new THREE.Mesh(transGeo, transMat);
+        this.transitionSphere.renderOrder = -99;
+        this.group.add(this.transitionSphere);
+
+        scene.add(this.group);
+        this.setVisible(threeState.cameraMode === "panorama");
+    },
+
+    getRoomPanoramaTexture(roomId, map) {
+        if (!roomId) return null;
+        if (this.cache.has(roomId)) {
+            return this.cache.get(roomId);
+        }
+        const room = map ? map.rooms.find(r => r.id === roomId) : null;
+        if (!room) return null;
+        const tex = this.generateEquirectangularPanoramaTexture(room, map);
+        if (tex) {
+            this.cache.set(roomId, tex);
+        }
+        return tex;
+    },
+
+    generateEquirectangularPanoramaTexture(room, map) {
+        if (typeof document === "undefined") return null;
+        const W = 2048;
+        const H = 1024;
+        const canvas = document.createElement("canvas");
+        canvas.width = W;
+        canvas.height = H;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return null;
+
+        const semanticHex = room ? getSemanticRoomColorHex(room) : "#55BFD0";
+        const roomName = room ? (room.name || room.id) : "Space";
+
+        // 1. Sky/Ceiling -> Horizon -> Floor Gradient
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+        bgGrad.addColorStop(0.0, "#0e1113");
+        bgGrad.addColorStop(0.25, "#161a1c");
+        bgGrad.addColorStop(0.34, "#1d2225");
+        bgGrad.addColorStop(0.50, "#191e20");
+        bgGrad.addColorStop(0.66, "#14181a");
+        bgGrad.addColorStop(1.0, "#0b0d0e");
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, W, H);
+
+        // 2. Ceiling Cove Architectural Lighting
+        const ceilingGrad = ctx.createLinearGradient(0, 0, 0, H * 0.34);
+        ceilingGrad.addColorStop(0, "rgba(240, 238, 231, 0.08)");
+        ceilingGrad.addColorStop(0.6, "rgba(85, 191, 208, 0.06)");
+        ceilingGrad.addColorStop(1, "rgba(245, 158, 11, 0.09)");
+        ctx.fillStyle = ceilingGrad;
+        ctx.fillRect(0, 0, W, H * 0.34);
+
+        ctx.strokeStyle = "rgba(85, 191, 208, 0.32)";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(0, H * 0.33);
+        ctx.lineTo(W, H * 0.33);
+        ctx.stroke();
+
+        // 3. Walls & Architectural Panels
+        const wallH = H * 0.35;
+        const wallY = H * 0.33;
+
+        const wallTint = ctx.createLinearGradient(0, wallY, 0, wallY + wallH);
+        wallTint.addColorStop(0, "rgba(29, 34, 37, 0.96)");
+        wallTint.addColorStop(0.5, semanticHex + "25");
+        wallTint.addColorStop(1, "rgba(18, 22, 24, 0.98)");
+        ctx.fillStyle = wallTint;
+        ctx.fillRect(0, wallY, W, wallH);
+
+        const numPanels = 12;
+        const panelW = W / numPanels;
+        for (let p = 0; p < numPanels; p++) {
+            const px = p * panelW;
+            ctx.strokeStyle = "rgba(57, 65, 68, 0.45)";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(px, wallY);
+            ctx.lineTo(px, wallY + wallH);
+            ctx.stroke();
+
+            ctx.strokeStyle = "rgba(85, 191, 208, 0.12)";
+            ctx.strokeRect(px + 14, wallY + 16, panelW - 28, wallH - 32);
+        }
+
+        // Chair Rail
+        ctx.strokeStyle = "rgba(168, 173, 169, 0.35)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, H * 0.58);
+        ctx.lineTo(W, H * 0.58);
+        ctx.stroke();
+
+        // Baseboard
+        ctx.fillStyle = "#141719";
+        ctx.fillRect(0, H * 0.66, W, H * 0.025);
+        ctx.strokeStyle = "rgba(85, 191, 208, 0.4)";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, H * 0.66);
+        ctx.lineTo(W, H * 0.66);
+        ctx.stroke();
+
+        // 4. Floor Architectural Perspective
+        const floorY = H * 0.68;
+        for (let fy = floorY; fy < H; fy += 28) {
+            const pOpacity = Math.min(0.35, 0.08 + ((fy - floorY) / (H - floorY)) * 0.28);
+            ctx.strokeStyle = `rgba(85, 191, 208, ${pOpacity.toFixed(2)})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, fy);
+            ctx.lineTo(W, fy);
+            ctx.stroke();
+        }
+        for (let fx = 0; fx < W; fx += 128) {
+            ctx.strokeStyle = "rgba(43, 50, 52, 0.45)";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(fx, floorY);
+            ctx.lineTo(W / 2 + (fx - W / 2) * 0.25, H);
+            ctx.stroke();
+        }
+
+        // Nadir Emblem
+        const nadirGrad = ctx.createRadialGradient(W / 2, H * 0.92, 10, W / 2, H * 0.92, 120);
+        nadirGrad.addColorStop(0, "rgba(85, 191, 208, 0.45)");
+        nadirGrad.addColorStop(0.6, "rgba(85, 191, 208, 0.15)");
+        nadirGrad.addColorStop(1, "rgba(0, 0, 0, 0)");
+        ctx.fillStyle = nadirGrad;
+        ctx.beginPath();
+        ctx.arc(W / 2, H * 0.92, 120, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 5. Doorways to Adjacent Rooms
+        if (room && map) {
+            const roomDoors = (threeState.doorPoints2D || []).filter(d => d.roomUId === room.id || d.roomVId === room.id);
+            const center2D = { x: room.x + room.w / 2, y: room.y + room.h / 2 };
+            const center3D = map2DTo3D(center2D.x, center2D.y);
+
+            roomDoors.forEach(door => {
+                const doorPos3D = map2DTo3D(door.x, door.y);
+                const dx = doorPos3D.x - center3D.x;
+                const dz = doorPos3D.z - center3D.z;
+                const angle = Math.atan2(dx, dz);
+                const normX = ((angle / Math.PI + 1) / 2) * W;
+
+                const dw = 140;
+                const dh = wallH * 0.85;
+                const dy = wallY + (wallH - dh);
+                const dxLeft = (normX - dw / 2 + W) % W;
+
+                ctx.fillStyle = "rgba(245, 158, 11, 0.18)";
+                ctx.fillRect(dxLeft, dy, dw, dh);
+                ctx.strokeStyle = "rgba(251, 191, 36, 0.85)";
+                ctx.lineWidth = 3;
+                ctx.strokeRect(dxLeft, dy, dw, dh);
+
+                const targetRoomName = (door.roomUId === room.id) ? (door.roomVName || "Doorway") : (door.roomUName || "Doorway");
+                ctx.fillStyle = "#1e2325";
+                ctx.fillRect(dxLeft - 10, dy - 26, dw + 20, 22);
+                ctx.strokeStyle = "rgba(251, 191, 36, 0.75)";
+                ctx.lineWidth = 1;
+                ctx.strokeRect(dxLeft - 10, dy - 26, dw + 20, 22);
+
+                ctx.fillStyle = "#fbbf24";
+                ctx.font = "bold 13px 'SF Pro', sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(`🚪 ${targetRoomName}`, dxLeft + dw / 2, dy - 10);
+            });
+        }
+
+        // 6. Architectural Room Badge Header (Azimuth 0)
+        const titleX = W * 0.5;
+        const titleY = wallY + 65;
+
+        ctx.fillStyle = "rgba(23, 26, 28, 0.92)";
+        if (ctx.roundRect) ctx.roundRect(titleX - 220, titleY - 32, 440, 64, 8);
+        else ctx.rect(titleX - 220, titleY - 32, 440, 64);
+        ctx.fill();
+        ctx.strokeStyle = semanticHex;
+        ctx.lineWidth = 1.8;
+        ctx.stroke();
+
+        ctx.fillStyle = "#f0eee7";
+        ctx.font = "bold 20px 'SF Pro', sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(roomName.toUpperCase(), titleX, titleY - 4);
+
+        ctx.fillStyle = "#55bfd0";
+        ctx.font = "12px monospace";
+        ctx.fillText("MATTERPORT3D • EQUIRECTANGULAR 360° • RXR STUDIO", titleX, titleY + 18);
+
+        // 7. Landmarks / Furniture Badges
+        if (room && room.landmarks && room.landmarks.length > 0) {
+            room.landmarks.forEach((lm, idx) => {
+                const lmAngle = -Math.PI * 0.6 + (idx / Math.max(1, room.landmarks.length - 1)) * (Math.PI * 1.2);
+                const lmX = (((lmAngle / Math.PI + 1) / 2) * W) % W;
+                const lmY = wallY + wallH * 0.55;
+
+                ctx.fillStyle = "rgba(8, 51, 68, 0.88)";
+                if (ctx.roundRect) ctx.roundRect(lmX - 70, lmY - 18, 140, 36, 6);
+                else ctx.rect(lmX - 70, lmY - 18, 140, 36);
+                ctx.fill();
+                ctx.strokeStyle = "rgba(34, 211, 238, 0.6)";
+                ctx.lineWidth = 1.2;
+                ctx.stroke();
+
+                ctx.fillStyle = "#67e8f9";
+                ctx.font = "bold 13px 'SF Pro', sans-serif";
+                ctx.textAlign = "center";
+                ctx.fillText(`✦ ${lm}`, lmX, lmY + 5);
+            });
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = (typeof THREE.SRGBColorSpace !== "undefined") ? THREE.SRGBColorSpace : THREE.LinearEncoding;
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.minFilter = THREE.LinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = false;
+
+        return tex;
+    },
+
+    preloadRoute(pathNodeIds, map) {
+        if (!pathNodeIds || !map) return;
+        const roomIds = new Set();
+        pathNodeIds.forEach(nid => {
+            const n = map.nodes.find(node => node.id === nid);
+            if (n && n.roomId) roomIds.add(n.roomId);
+        });
+        roomIds.forEach(rid => {
+            if (!this.cache.has(rid)) {
+                this.getRoomPanoramaTexture(rid, map);
+            }
+        });
+    },
+
+    setActiveRoom(roomId, map) {
+        if (!roomId) return;
+        const tex = this.getRoomPanoramaTexture(roomId, map);
+        if (tex && this.currentSphere) {
+            this.currentSphere.material.map = tex;
+            this.currentSphere.material.opacity = 1.0;
+            this.currentSphere.material.needsUpdate = true;
+        }
+        if (this.transitionSphere) {
+            this.transitionSphere.material.opacity = 0.0;
+            this.transitionSphere.material.needsUpdate = true;
+        }
+        this.activeRoomId = roomId;
+        this.targetRoomId = null;
+        this.isTransitioning = false;
+        this.transitionAlpha = 0.0;
+    },
+
+    startTransition(fromRoomId, toRoomId, map) {
+        if (!fromRoomId || !toRoomId || fromRoomId === toRoomId) return;
+        const texFrom = this.getRoomPanoramaTexture(fromRoomId, map);
+        const texTo = this.getRoomPanoramaTexture(toRoomId, map);
+
+        if (this.currentSphere && texFrom) {
+            this.currentSphere.material.map = texFrom;
+            this.currentSphere.material.opacity = 1.0;
+            this.currentSphere.material.needsUpdate = true;
+        }
+        if (this.transitionSphere) {
+            this.transitionSphere.material.map = texTo || null;
+            this.transitionSphere.material.opacity = 0.0;
+            this.transitionSphere.material.needsUpdate = true;
+        }
+        this.activeRoomId = fromRoomId;
+        this.targetRoomId = toRoomId;
+        this.isTransitioning = true;
+        this.transitionAlpha = 0.0;
+    },
+
+    updateTransition(alpha) {
+        this.transitionAlpha = Math.max(0.0, Math.min(1.0, alpha));
+        if (this.currentSphere && this.transitionSphere && this.isTransitioning) {
+            const hasTargetTex = !!this.transitionSphere.material.map;
+            if (hasTargetTex) {
+                // Keep base sphere visible while crossfading transition sphere over it
+                this.currentSphere.material.opacity = Math.max(0.05, 1.0 - this.transitionAlpha * 0.95);
+                this.transitionSphere.material.opacity = this.transitionAlpha;
+            } else {
+                // If target panorama is delayed or failed to load, keep current panorama 100% visible
+                this.currentSphere.material.opacity = 1.0;
+                this.transitionSphere.material.opacity = 0.0;
+            }
+            this.currentSphere.material.needsUpdate = true;
+            this.transitionSphere.material.needsUpdate = true;
+        }
+    },
+
+    completeTransition(map) {
+        if (this.targetRoomId) {
+            this.setActiveRoom(this.targetRoomId, map);
+        } else {
+            this.isTransitioning = false;
+            this.transitionAlpha = 0.0;
+            if (this.transitionSphere) {
+                this.transitionSphere.material.opacity = 0.0;
+                this.transitionSphere.material.needsUpdate = true;
+            }
+        }
+    },
+
+    updatePosition(camPos) {
+        if (this.group && camPos) {
+            this.group.position.copy(camPos);
+        }
+    },
+
+    setVisible(visible) {
+        if (this.group) {
+            this.group.visible = visible;
+        }
+    }
+};
+
+/***********************************************************************
+ * 6C. ARCHITECTURAL WALL GENERATION WITH DOORWAY OPENINGS
+ * Cuts out 1.40m x 2.45m portals at doorway locations so first-person camera
+ * never intersects solid wall boxes during doorway transitions.
+ ***********************************************************************/
+function createRoomWallsWithOpenings(room, w3D, h3D, d3D, wallMat, edgesMat, allDoors) {
+    const group = new THREE.Group();
+    const T = 0.08;
+    const doorW = 1.40;
+    const doorH = 2.45;
+    const hw = room.w / 2;
+    const hh = room.h / 2;
+    const cx = room.x + hw;
+    const cy = room.y + hh;
+
+    const roomDoors = (allDoors || []).filter(d => d.roomUId === room.id || d.roomVId === room.id);
+    const wallDoors = { N: [], S: [], W: [], E: [] };
+
+    roomDoors.forEach(d => {
+        const lx = d.x - cx;
+        const ly = d.y - cy;
+        const distN = Math.abs(ly + hh);
+        const distS = Math.abs(ly - hh);
+        const distW = Math.abs(lx + hw);
+        const distE = Math.abs(lx - hw);
+        const minDist = Math.min(distN, distS, distW, distE);
+        if (minDist < 50) {
+            if (minDist === distN) wallDoors.N.push({ u3D: lx * SCALE_3D, d });
+            else if (minDist === distS) wallDoors.S.push({ u3D: lx * SCALE_3D, d });
+            else if (minDist === distW) wallDoors.W.push({ u3D: ly * SCALE_3D, d });
+            else wallDoors.E.push({ u3D: ly * SCALE_3D, d });
+        }
+    });
+
+    function addWallSegment(width, height, depth, posX, posY, posZ) {
+        if (width <= 0.04 || depth <= 0.04 || height <= 0.04) return;
+        const geo = new THREE.BoxGeometry(width, height, depth);
+        const mesh = new THREE.Mesh(geo, wallMat);
+        mesh.position.set(posX, posY, posZ);
+        group.add(mesh);
+
+        if (edgesMat) {
+            const edgeGeo = new THREE.EdgesGeometry(geo);
+            const edgeMesh = new THREE.LineSegments(edgeGeo, edgesMat);
+            edgeMesh.position.set(posX, posY, posZ);
+            group.add(edgeMesh);
+        }
+    }
+
+    // 1. North Wall (z = -d3D/2, spans x from -w3D/2 to +w3D/2)
+    if (wallDoors.N.length > 0) {
+        const u = wallDoors.N[0].u3D;
+        const x1 = Math.max(-w3D / 2, u - doorW / 2);
+        const x2 = Math.min(w3D / 2, u + doorW / 2);
+        const wLeft = x1 - (-w3D / 2);
+        const wRight = (w3D / 2) - x2;
+        const wLintel = x2 - x1;
+        const hLintel = h3D - doorH;
+
+        if (wLeft > 0.05) addWallSegment(wLeft, h3D, T, -w3D / 2 + wLeft / 2, h3D / 2, -d3D / 2);
+        if (wRight > 0.05) addWallSegment(wRight, h3D, T, x2 + wRight / 2, h3D / 2, -d3D / 2);
+        if (wLintel > 0.05 && hLintel > 0.05) addWallSegment(wLintel, hLintel, T, (x1 + x2) / 2, doorH + hLintel / 2, -d3D / 2);
+    } else {
+        addWallSegment(w3D, h3D, T, 0, h3D / 2, -d3D / 2);
+    }
+
+    // 2. South Wall (z = +d3D/2, spans x from -w3D/2 to +w3D/2)
+    if (wallDoors.S.length > 0) {
+        const u = wallDoors.S[0].u3D;
+        const x1 = Math.max(-w3D / 2, u - doorW / 2);
+        const x2 = Math.min(w3D / 2, u + doorW / 2);
+        const wLeft = x1 - (-w3D / 2);
+        const wRight = (w3D / 2) - x2;
+        const wLintel = x2 - x1;
+        const hLintel = h3D - doorH;
+
+        if (wLeft > 0.05) addWallSegment(wLeft, h3D, T, -w3D / 2 + wLeft / 2, h3D / 2, d3D / 2);
+        if (wRight > 0.05) addWallSegment(wRight, h3D, T, x2 + wRight / 2, h3D / 2, d3D / 2);
+        if (wLintel > 0.05 && hLintel > 0.05) addWallSegment(wLintel, hLintel, T, (x1 + x2) / 2, doorH + hLintel / 2, d3D / 2);
+    } else {
+        addWallSegment(w3D, h3D, T, 0, h3D / 2, d3D / 2);
+    }
+
+    // 3. West Wall (x = -w3D/2, spans z from -d3D/2 to +d3D/2)
+    if (wallDoors.W.length > 0) {
+        wallDoors.W.sort((a, b) => a.u3D - b.u3D);
+        let currZ = -d3D / 2;
+        wallDoors.W.forEach(doorInfo => {
+            const u = doorInfo.u3D;
+            const z1 = Math.max(currZ, u - doorW / 2);
+            const z2 = Math.min(d3D / 2, u + doorW / 2);
+            const dSeg = z1 - currZ;
+            const dLintel = z2 - z1;
+            const hLintel = h3D - doorH;
+
+            if (dSeg > 0.05) addWallSegment(T, h3D, dSeg, -w3D / 2, h3D / 2, currZ + dSeg / 2);
+            if (dLintel > 0.05 && hLintel > 0.05) addWallSegment(T, hLintel, dLintel, -w3D / 2, doorH + hLintel / 2, (z1 + z2) / 2);
+            currZ = z2;
+        });
+        const dRem = (d3D / 2) - currZ;
+        if (dRem > 0.05) addWallSegment(T, h3D, dRem, -w3D / 2, h3D / 2, currZ + dRem / 2);
+    } else {
+        addWallSegment(T, h3D, d3D, -w3D / 2, h3D / 2, 0);
+    }
+
+    // 4. East Wall (x = +w3D/2, spans z from -d3D/2 to +d3D/2)
+    if (wallDoors.E.length > 0) {
+        wallDoors.E.sort((a, b) => a.u3D - b.u3D);
+        let currZ = -d3D / 2;
+        wallDoors.E.forEach(doorInfo => {
+            const u = doorInfo.u3D;
+            const z1 = Math.max(currZ, u - doorW / 2);
+            const z2 = Math.min(d3D / 2, u + doorW / 2);
+            const dSeg = z1 - currZ;
+            const dLintel = z2 - z1;
+            const hLintel = h3D - doorH;
+
+            if (dSeg > 0.05) addWallSegment(T, h3D, dSeg, w3D / 2, h3D / 2, currZ + dSeg / 2);
+            if (dLintel > 0.05 && hLintel > 0.05) addWallSegment(T, hLintel, dLintel, w3D / 2, doorH + hLintel / 2, (z1 + z2) / 2);
+            currZ = z2;
+        });
+        const dRem = (d3D / 2) - currZ;
+        if (dRem > 0.05) addWallSegment(T, h3D, dRem, w3D / 2, h3D / 2, currZ + dRem / 2);
+    } else {
+        addWallSegment(T, h3D, d3D, w3D / 2, h3D / 2, 0);
+    }
+
+    return group;
+}
+
+function computeAll3DDoors(map) {
+    const doorList = [];
+    const placedDoorKeys = new Set();
+    if (!map || !map.edges) return doorList;
+
+    map.edges.forEach(([uId, vId]) => {
+        const u = map.nodes.find(n => n.id === uId);
+        const v = map.nodes.find(n => n.id === vId);
+        if (!u || !v || u.roomId === v.roomId) return;
+
+        const roomU = map.rooms.find(r => r.id === u.roomId);
+        const roomV = map.rooms.find(r => r.id === v.roomId);
+        const doorPlacements = [];
+
+        if (roomU) {
+            const hitU = intersectSegmentWithRect(u.x, u.y, v.x, v.y, roomU);
+            if (hitU) doorPlacements.push({ ...hitU, targetNodeId: v.id, fromNodeId: u.id, roomName: roomV ? roomV.name : v.id });
+        }
+        if (roomV) {
+            const hitV = intersectSegmentWithRect(v.x, v.y, u.x, u.y, roomV);
+            if (hitV) doorPlacements.push({ ...hitV, targetNodeId: u.id, fromNodeId: v.id, roomName: roomU ? roomU.name : u.id });
+        }
+
+        if (doorPlacements.length === 2 && Math.hypot(doorPlacements[0].x - doorPlacements[1].x, doorPlacements[0].y - doorPlacements[1].y) < 55) {
+            const midX = (doorPlacements[0].x + doorPlacements[1].x) / 2;
+            const midY = (doorPlacements[0].y + doorPlacements[1].y) / 2;
+            const key = `${Math.round(midX / 20)}_${Math.round(midY / 20)}`;
+            if (!placedDoorKeys.has(key)) {
+                placedDoorKeys.add(key);
+                doorList.push({
+                    x: midX,
+                    y: midY,
+                    orientation: doorPlacements[0].orientation,
+                    angle: doorPlacements[0].orientation === "vertical" ? Math.PI / 2 : 0,
+                    uId: u.id,
+                    vId: v.id,
+                    roomUId: u.roomId,
+                    roomVId: v.roomId,
+                    roomU,
+                    roomV,
+                    roomUName: roomU ? roomU.name : u.roomId,
+                    roomVName: roomV ? roomV.name : v.roomId
+                });
+            }
+        } else if (doorPlacements.length > 0) {
+            doorPlacements.forEach(dp => {
+                const key = `${Math.round(dp.x / 18)}_${Math.round(dp.y / 18)}`;
+                if (!placedDoorKeys.has(key)) {
+                    placedDoorKeys.add(key);
+                    doorList.push({
+                        x: dp.x,
+                        y: dp.y,
+                        orientation: dp.orientation,
+                        angle: dp.orientation === "vertical" ? Math.PI / 2 : 0,
+                        uId: u.id,
+                        vId: v.id,
+                        roomUId: u.roomId,
+                        roomVId: v.roomId,
+                        roomU,
+                        roomV,
+                        roomUName: roomU ? roomU.name : u.roomId,
+                        roomVName: roomV ? roomV.name : v.roomId
+                    });
+                }
+            });
+        } else {
+            const midX = (u.x + v.x) / 2;
+            const midY = (u.y + v.y) / 2;
+            const key = `${Math.round(midX / 20)}_${Math.round(midY / 20)}`;
+            if (!placedDoorKeys.has(key)) {
+                placedDoorKeys.add(key);
+                const isVertical = Math.abs(u.y - v.y) > Math.abs(u.x - v.x);
+                const orientation = isVertical ? "horizontal" : "vertical";
+                doorList.push({
+                    x: midX,
+                    y: midY,
+                    orientation,
+                    angle: orientation === "vertical" ? Math.PI / 2 : 0,
+                    uId: u.id,
+                    vId: v.id,
+                    roomUId: u.roomId,
+                    roomVId: v.roomId,
+                    roomU,
+                    roomV,
+                    roomUName: roomU ? roomU.name : u.roomId,
+                    roomVName: roomV ? roomV.name : v.roomId
+                });
+            }
+        }
+    });
+    return doorList;
+}
+
+/***********************************************************************
  * 7. ACTUAL 3D MATTERPORT PANORAMA & DOLLHOUSE ENGINE (OPTIMIZED)
  ***********************************************************************/
 function initThreeMatterportEngine() {
@@ -2146,7 +2747,7 @@ function initThreeMatterportEngine() {
     scene.background = new THREE.Color(VIEWPORT_PALETTE.envBackground);
     scene.fog = new THREE.FogExp2(VIEWPORT_PALETTE.envBackground, 0.007);
 
-    // Near plane set to 0.05m to eliminate near-clipping black screen during doorway traversal
+    // Near plane set to 0.05m with doorway wall cutouts eliminating near-clipping
     const camera = new THREE.PerspectiveCamera(75, w / h, 0.05, 140);
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
     renderer.setSize(w, h);
@@ -2167,6 +2768,9 @@ function initThreeMatterportEngine() {
     const dynamicTrajectoryGroup = new THREE.Group();
     scene.add(worldGroup);
     scene.add(dynamicTrajectoryGroup);
+
+    // Initialize 360° Panorama dual-sphere background engine
+    PanoramaManager.init(scene);
 
     threeState.scene = scene;
     threeState.camera = camera;
@@ -2222,6 +2826,9 @@ function rebuild3DMatterportScene() {
     threeState.roomFloorsById = {};
     threeState.wallMaterials = [];
     threeState.labelAnchors = [];
+
+    // Precompute all 3D doors first so room walls can cut open portal frames around them
+    threeState.doorPoints2D = computeAll3DDoors(map);
 
     if (map.rooms.length > 0) {
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -2300,8 +2907,7 @@ function rebuild3DMatterportScene() {
             roomGroup.add(roomGrid);
         }
 
-        // 2C. Fast Lambert Transparent 3D Room Enclosure (Architectural Walls)
-        const boxGeo = new THREE.BoxGeometry(w3D, h3D, d3D);
+        // 2C. Fast Lambert Architectural Walls with Doorway Portal Openings (No Near-Plane Wall Slicing)
         const wallColor = new THREE.Color(VIEWPORT_PALETTE.walls).lerp(roomHex, 0.20);
         const wallMat = new THREE.MeshLambertMaterial({
             color: wallColor,
@@ -2311,20 +2917,14 @@ function rebuild3DMatterportScene() {
             depthWrite: false
         });
         threeState.wallMaterials.push(wallMat);
-        const boxMesh = new THREE.Mesh(boxGeo, wallMat);
-        boxMesh.position.y = h3D / 2;
-        roomGroup.add(boxMesh);
 
-        // Architectural Wireframe Perimeter Cage (Visible Outlines for Walls & Edges)
-        const edgesGeo = new THREE.EdgesGeometry(boxGeo);
         const edgesMat = new THREE.LineBasicMaterial({
             color: isGoalRoom ? VIEWPORT_PALETTE.waypoints : (isStartRoom ? VIEWPORT_PALETTE.navigationPath : 0x59636B),
             transparent: true,
             opacity: 0.90
         });
-        const wireframeCage = new THREE.LineSegments(edgesGeo, edgesMat);
-        wireframeCage.position.y = h3D / 2;
-        roomGroup.add(wireframeCage);
+        const wallsGroup = createRoomWallsWithOpenings(room, w3D, h3D, d3D, wallMat, edgesMat, threeState.doorPoints2D);
+        roomGroup.add(wallsGroup);
 
         // 2D. Procedural 3D Furniture / Landmarks
         if (showModels && room.landmarks && room.landmarks.length > 0) {
@@ -2376,93 +2976,12 @@ function rebuild3DMatterportScene() {
     });
 
     // 3B. Build 3D Doors & Architectural Portals Where Agent Travels Room-to-Room
-    threeState.doorPoints2D = [];
     const toggleDoorsEl = document.getElementById("toggleDoors");
     const showDoors = toggleDoorsEl ? toggleDoorsEl.checked : true;
-    if (showDoors) {
-        const placedDoorKeys = new Set();
-        map.edges.forEach(([uId, vId]) => {
-            const u = map.nodes.find(n => n.id === uId);
-            const v = map.nodes.find(n => n.id === vId);
-            if (!u || !v || u.roomId === v.roomId) return;
-
-            const roomU = map.rooms.find(r => r.id === u.roomId);
-            const roomV = map.rooms.find(r => r.id === v.roomId);
-            const doorPlacements = [];
-
-            if (roomU) {
-                const hitU = intersectSegmentWithRect(u.x, u.y, v.x, v.y, roomU);
-                if (hitU) doorPlacements.push({ ...hitU, targetNodeId: v.id, fromNodeId: u.id, roomName: roomV ? roomV.name : v.id });
-            }
-            if (roomV) {
-                const hitV = intersectSegmentWithRect(v.x, v.y, u.x, u.y, roomV);
-                if (hitV) doorPlacements.push({ ...hitV, targetNodeId: u.id, fromNodeId: v.id, roomName: roomU ? roomU.name : u.id });
-            }
-
-            if (doorPlacements.length === 2 && Math.hypot(doorPlacements[0].x - doorPlacements[1].x, doorPlacements[0].y - doorPlacements[1].y) < 55) {
-                const midX = (doorPlacements[0].x + doorPlacements[1].x) / 2;
-                const midY = (doorPlacements[0].y + doorPlacements[1].y) / 2;
-                const key = `${Math.round(midX / 20)}_${Math.round(midY / 20)}`;
-                if (!placedDoorKeys.has(key)) {
-                    placedDoorKeys.add(key);
-                    const dMesh = create3DDoorwayMesh(midX, midY, doorPlacements[0].orientation, u.id, v.id, roomU, roomV);
-                    threeState.worldGroup.add(dMesh);
-                    threeState.doorPoints2D.push({
-                        x: midX,
-                        y: midY,
-                        angle: doorPlacements[0].orientation === "vertical" ? Math.PI / 2 : 0,
-                        uId: u.id,
-                        vId: v.id,
-                        roomUId: u.roomId,
-                        roomVId: v.roomId,
-                        roomUName: roomU ? roomU.name : u.roomId,
-                        roomVName: roomV ? roomV.name : v.roomId
-                    });
-                }
-            } else if (doorPlacements.length > 0) {
-                doorPlacements.forEach(dp => {
-                    const key = `${Math.round(dp.x / 18)}_${Math.round(dp.y / 18)}`;
-                    if (!placedDoorKeys.has(key)) {
-                        placedDoorKeys.add(key);
-                        const dMesh = create3DDoorwayMesh(dp.x, dp.y, dp.orientation, u.id, v.id, roomU, roomV);
-                        threeState.worldGroup.add(dMesh);
-                        threeState.doorPoints2D.push({
-                            x: dp.x,
-                            y: dp.y,
-                            angle: dp.orientation === "vertical" ? Math.PI / 2 : 0,
-                            uId: u.id,
-                            vId: v.id,
-                            roomUId: u.roomId,
-                            roomVId: v.roomId,
-                            roomUName: roomU ? roomU.name : u.roomId,
-                            roomVName: roomV ? roomV.name : v.roomId
-                        });
-                    }
-                });
-            } else {
-                // Midpoint fallback: If room boundaries did not directly intersect segment (e.g. gap between rooms)
-                const midX = (u.x + v.x) / 2;
-                const midY = (u.y + v.y) / 2;
-                const key = `${Math.round(midX / 20)}_${Math.round(midY / 20)}`;
-                if (!placedDoorKeys.has(key)) {
-                    placedDoorKeys.add(key);
-                    const isVertical = Math.abs(u.y - v.y) > Math.abs(u.x - v.x);
-                    const orientation = isVertical ? "horizontal" : "vertical";
-                    const dMesh = create3DDoorwayMesh(midX, midY, orientation, u.id, v.id, roomU, roomV);
-                    threeState.worldGroup.add(dMesh);
-                    threeState.doorPoints2D.push({
-                        x: midX,
-                        y: midY,
-                        angle: orientation === "vertical" ? Math.PI / 2 : 0,
-                        uId: u.id,
-                        vId: v.id,
-                        roomUId: u.roomId,
-                        roomVId: v.roomId,
-                        roomUName: roomU ? roomU.name : u.roomId,
-                        roomVName: roomV ? roomV.name : v.roomId
-                    });
-                }
-            }
+    if (showDoors && threeState.doorPoints2D) {
+        threeState.doorPoints2D.forEach(door => {
+            const dMesh = create3DDoorwayMesh(door.x, door.y, door.orientation, door.uId, door.vId, door.roomU, door.roomV);
+            threeState.worldGroup.add(dMesh);
         });
     }
 
@@ -2531,6 +3050,13 @@ function rebuild3DMatterportScene() {
 
     threeState.agentMeshGroup = agentGroup;
     threeState.worldGroup.add(agentGroup);
+
+    // Preload panoramic background textures along planned route
+    PanoramaManager.preloadRoute(agentState.plannedPath, map);
+    const currNode = map.nodes.find(n => n.id === agentState.currentNodeId) || map.nodes[0];
+    if (currNode) {
+        PanoramaManager.setActiveRoom(currNode.roomId, map);
+    }
 
     update3DTrajectoryAndHighlights();
     syncAgentTo3DScene(false);
@@ -2656,7 +3182,7 @@ function intersectSegmentWithRect(x1, y1, x2, y2, room) {
         if (Math.abs(denom) < 1e-5) return;
         const t = ((w.x1 - x1) * rdy - (w.y1 - y1) * rdx) / denom;
         const u = ((w.x1 - x1) * dy - (w.y1 - y1) * dx) / denom;
-        if (t >= 0.02 && t <= 0.98 && u >= 0.05 && u <= 0.95 && t < bestT) {
+        if (t >= 0.01 && t <= 0.99 && u >= 0.01 && u <= 0.99 && t < bestT) {
             bestT = t;
             bestHit = {
                 x: x1 + t * dx,
@@ -2875,6 +3401,9 @@ function syncAgentTo3DScene(snapImmediately = false) {
         agentState.y = ty;
         threeState.walkWaypoints = [];
         threeState.currentWaypointIndex = 0;
+        if (currRoom) {
+            PanoramaManager.setActiveRoom(currRoom.id, map);
+        }
     }
 
     const p3d = map2DTo3D(tx, ty);
@@ -2949,6 +3478,11 @@ function set3DCameraMode(mode) {
 
     if (threeState.agentMeshGroup) {
         threeState.agentMeshGroup.visible = (mode === "dollhouse");
+    }
+
+    PanoramaManager.setVisible(mode === "panorama");
+    if (mode === "panorama" && threeState.camera) {
+        PanoramaManager.updatePosition(threeState.camera.position);
     }
 }
 
@@ -3143,9 +3677,11 @@ function animateThreeLoop(timestamp) {
     requestAnimationFrame(animateThreeLoop);
     if (!threeState.renderer || !threeState.scene || !threeState.camera) return;
 
-    if (!lastThreeTimestamp) lastThreeTimestamp = timestamp;
-    const dt = Math.min(0.05, Math.max(0.005, (timestamp - lastThreeTimestamp) / 1000));
-    lastThreeTimestamp = timestamp;
+    const now = (typeof timestamp === "number" && !isNaN(timestamp)) ? timestamp : performance.now();
+    if (!lastThreeTimestamp || isNaN(lastThreeTimestamp)) lastThreeTimestamp = now;
+    const deltaMs = now - lastThreeTimestamp;
+    const dt = Math.min(0.05, Math.max(0.005, (deltaMs > 0 && !isNaN(deltaMs)) ? (deltaMs / 1000) : 0.016));
+    lastThreeTimestamp = now;
 
     // Linear physical walking speed (m/s) scaled proportionally by walkingPace slider
     const walkSpeed = 2.8 * Math.max(0.35, agentState.walkingPace);
@@ -3166,11 +3702,22 @@ function animateThreeLoop(timestamp) {
     const dist3D = Math.hypot(dx3D, dz3D);
     const isWalking = dist3D > 0.04;
 
-    if (isWalking) {
-        const stepDist = Math.min(dist3D, walkSpeed * dt);
-        threeState.camCurrentPos.x += (dx3D / dist3D) * stepDist;
-        threeState.camCurrentPos.z += (dz3D / dist3D) * stepDist;
-        agentState.walkBobPhase += (stepDist / 0.5) * Math.PI * 2;
+    if (isNaN(agentState.walkBobPhase)) agentState.walkBobPhase = 0;
+
+    if (isWalking && dist3D > 0.001) {
+        const stepDist = Math.min(dist3D, Math.max(0, walkSpeed * dt));
+        if (!isNaN(stepDist) && stepDist > 0) {
+            threeState.camCurrentPos.x += (dx3D / dist3D) * stepDist;
+            threeState.camCurrentPos.z += (dz3D / dist3D) * stepDist;
+            agentState.walkBobPhase = (agentState.walkBobPhase + (stepDist / 0.5) * Math.PI * 2) % (Math.PI * 200);
+        }
+
+        // Smooth continuous panorama crossfade during doorway traversal
+        if (threeState.walkWaypoints && threeState.walkWaypoints.length > 1) {
+            const totalWp = threeState.walkWaypoints.length;
+            const progress = (threeState.currentWaypointIndex + Math.max(0, 1.0 - (dist3D - stepDist) / Math.max(0.01, dist3D))) / totalWp;
+            PanoramaManager.updateTransition(progress);
+        }
     } else {
         threeState.camCurrentPos.x = threeState.camDesiredPos.x;
         threeState.camCurrentPos.z = threeState.camDesiredPos.z;
@@ -3208,6 +3755,9 @@ function animateThreeLoop(timestamp) {
             // Reached final viewpoint of this hop
             threeState.walkWaypoints = [];
             threeState.desiredPanoYaw = undefined;
+            const map = getActiveMap();
+            PanoramaManager.completeTransition(map);
+
             if (agentState.isWalking && agentState.onHopComplete) {
                 const cb = agentState.onHopComplete;
                 agentState.onHopComplete = null;
@@ -3272,11 +3822,18 @@ function animateThreeLoop(timestamp) {
         const perpX = Math.cos(threeState.panoYaw) * headSway;
         const perpZ = -Math.sin(threeState.panoYaw) * headSway;
 
-        threeState.camera.position.set(
-            threeState.camCurrentPos.x + perpX,
-            threeState.camCurrentPos.y + headBob,
-            threeState.camCurrentPos.z + perpZ
-        );
+        const hBob = (!isNaN(headBob) && isFinite(headBob)) ? headBob : 0;
+        const pX = (!isNaN(perpX) && isFinite(perpX)) ? perpX : 0;
+        const pZ = (!isNaN(perpZ) && isFinite(perpZ)) ? perpZ : 0;
+
+        if (!isNaN(threeState.camCurrentPos.x) && !isNaN(threeState.camCurrentPos.z)) {
+            threeState.camera.position.set(
+                threeState.camCurrentPos.x + pX,
+                threeState.camCurrentPos.y + hBob,
+                threeState.camCurrentPos.z + pZ
+            );
+        }
+
         const lookDir = new THREE.Vector3(
             Math.sin(threeState.panoYaw) * Math.cos(threeState.panoPitch),
             Math.sin(threeState.panoPitch),
@@ -3284,6 +3841,7 @@ function animateThreeLoop(timestamp) {
         );
         const target = threeState.camera.position.clone().add(lookDir);
         threeState.camera.lookAt(target);
+        PanoramaManager.updatePosition(threeState.camera.position);
     } else if (threeState.cameraMode === "dollhouse") {
         const ox = threeState.orbitTarget.x + threeState.orbitRadius * Math.sin(threeState.orbitPhi) * Math.sin(threeState.orbitTheta);
         const oy = threeState.orbitTarget.y + threeState.orbitRadius * Math.cos(threeState.orbitPhi);
@@ -3326,12 +3884,29 @@ function updateProjected3DLabels() {
     }
 
     const tempV = new THREE.Vector3();
+    const camPos = threeState.camera.position;
+    const camDir = new THREE.Vector3();
+    threeState.camera.getWorldDirection(camDir);
+
     threeState.labelAnchors.forEach((anchor, i) => {
         const el = container.children[i];
+        if (!el) return;
+
+        // Frustum culling: Vector from camera to anchor
+        tempV.copy(anchor.pos).sub(camPos);
+        const distToCam = tempV.length();
+        const dot = tempV.normalize().dot(camDir);
+
+        // Hide labels behind or beside the camera or too far away in panorama mode
+        if (dot < 0.25 || (threeState.cameraMode === "panorama" && distToCam > 24)) {
+            el.style.opacity = "0";
+            return;
+        }
+
         tempV.copy(anchor.pos);
         tempV.project(threeState.camera);
 
-        if (tempV.z > 1) {
+        if (tempV.z > 1 || tempV.z < -1) {
             el.style.opacity = "0";
             return;
         }
