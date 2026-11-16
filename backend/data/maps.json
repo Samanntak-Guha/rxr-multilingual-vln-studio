@@ -24,8 +24,8 @@
         "name": "Central Hallway",
         "name_hi": "गलियारा",
         "name_te": "హాల్‌వే",
-        "x": 310,
-        "y": 120,
+        "x": 302,
+        "y": 115,
         "w": 170,
         "h": 150,
         "color": "#8b5cf6",
@@ -114,8 +114,8 @@
       },
       {
         "id": "vp_3",
-        "x": 395,
-        "y": 190,
+        "x": 387,
+        "y": 185,
         "roomId": "r_hallway",
         "label": "Hall Center"
       },
@@ -1256,8 +1256,8 @@
       },
       {
         "id": "vp_2",
-        "x": 375,
-        "y": 255,
+        "x": 405,
+        "y": 259,
         "roomId": "r_custom_9188",
         "label": "Hallway Node"
       },
@@ -1304,6 +1304,270 @@
         {
           "title": "Bedroom 1 → Bedroom 1",
           "text": "Bedroom 1 నుండి Bedroom 1కి వెళ్లండి.",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ]
+    },
+    "addedToSimulator": true
+  },
+  "custom_map_8708": {
+    "id": "custom_map_8708",
+    "name": "ABHISHEK's ROOM",
+    "rooms": [
+      {
+        "id": "r_custom_3755",
+        "name": "Bedroom",
+        "x": 247,
+        "y": 105,
+        "w": 170,
+        "h": 130,
+        "color": "#D87979",
+        "landmarks": [
+          "Bed",
+          "Table"
+        ]
+      },
+      {
+        "id": "r_custom_0163",
+        "name": "Hallway",
+        "x": 417,
+        "y": 171,
+        "w": 170,
+        "h": 130,
+        "color": "#72C9A2",
+        "landmarks": [
+          "Staircase"
+        ]
+      },
+      {
+        "id": "r_custom_7203",
+        "name": "Kitchen",
+        "x": 247,
+        "y": 234,
+        "w": 170,
+        "h": 130,
+        "color": "#72C9A2",
+        "landmarks": [
+          "Sink",
+          "Table"
+        ]
+      },
+      {
+        "id": "r_custom_3372",
+        "name": "Garage",
+        "x": 587,
+        "y": 170,
+        "w": 170,
+        "h": 130,
+        "color": "#55BFD0",
+        "landmarks": [
+          "Workbench",
+          "Car"
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "vp_1",
+        "x": 346,
+        "y": 187,
+        "roomId": "r_custom_3755",
+        "label": "Bedroom Center"
+      },
+      {
+        "id": "vp_2",
+        "x": 502,
+        "y": 236,
+        "roomId": "r_custom_0163",
+        "label": "Hallway Center"
+      },
+      {
+        "id": "vp_3",
+        "x": 349,
+        "y": 291,
+        "roomId": "r_custom_7203",
+        "label": "Kitchen Center"
+      },
+      {
+        "id": "vp_4",
+        "x": 669,
+        "y": 229,
+        "roomId": "r_custom_3372",
+        "label": "Garage Node"
+      }
+    ],
+    "edges": [
+      [
+        "vp_1",
+        "vp_2"
+      ],
+      [
+        "vp_1",
+        "vp_3"
+      ],
+      [
+        "vp_3",
+        "vp_2"
+      ],
+      [
+        "vp_2",
+        "vp_4"
+      ]
+    ],
+    "presets": {
+      "en": [
+        {
+          "title": "Bedroom → Bedroom",
+          "text": "Start in the Bedroom, follow the pathway through the hallway, and reach the Bedroom.",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ],
+      "hi": [
+        {
+          "title": "Bedroom → Bedroom",
+          "text": "Bedroom से शुरू करें और Bedroom में जाएं।",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ],
+      "te": [
+        {
+          "title": "Bedroom → Bedroom",
+          "text": "Bedroom నుండి Bedroomకి వెళ్లండి.",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ]
+    }
+  },
+  "custom_map_6996": {
+    "id": "custom_map_6996",
+    "name": "ABHISHEK's ROOM",
+    "rooms": [
+      {
+        "id": "r_custom_7859",
+        "name": "Bedroom",
+        "x": 121,
+        "y": 151,
+        "w": 170,
+        "h": 130,
+        "color": "#55BFD0",
+        "landmarks": [
+          "Bed",
+          "Table"
+        ]
+      },
+      {
+        "id": "r_custom_8259",
+        "name": "Hallway",
+        "x": 293,
+        "y": 210,
+        "w": 170,
+        "h": 130,
+        "color": "#647D75",
+        "landmarks": [
+          "Staircase"
+        ]
+      },
+      {
+        "id": "r_custom_6147",
+        "name": "Kitchen",
+        "x": 122,
+        "y": 282,
+        "w": 170,
+        "h": 130,
+        "color": "#E5AD69",
+        "landmarks": [
+          "Sink",
+          "Table",
+          "Fridge"
+        ]
+      },
+      {
+        "id": "r_custom_3619",
+        "name": "Garage",
+        "x": 465,
+        "y": 210,
+        "w": 170,
+        "h": 130,
+        "color": "#B8D96B",
+        "landmarks": [
+          "Workbench",
+          "Car"
+        ]
+      }
+    ],
+    "nodes": [
+      {
+        "id": "vp_1",
+        "x": 206,
+        "y": 216,
+        "roomId": "r_custom_7859",
+        "label": "Bedroom Center"
+      },
+      {
+        "id": "vp_2",
+        "x": 378,
+        "y": 275,
+        "roomId": "r_custom_8259",
+        "label": "Hallway Center"
+      },
+      {
+        "id": "vp_3",
+        "x": 207,
+        "y": 347,
+        "roomId": "r_custom_6147",
+        "label": "Kitchen Center"
+      },
+      {
+        "id": "vp_4",
+        "x": 550,
+        "y": 275,
+        "roomId": "r_custom_3619",
+        "label": "Garage Center"
+      }
+    ],
+    "edges": [
+      [
+        "vp_1",
+        "vp_2"
+      ],
+      [
+        "vp_2",
+        "vp_4"
+      ],
+      [
+        "vp_3",
+        "vp_2"
+      ],
+      [
+        "vp_1",
+        "vp_3"
+      ]
+    ],
+    "presets": {
+      "en": [
+        {
+          "title": "Bedroom → Bedroom",
+          "text": "Start in the Bedroom, follow the pathway through the hallway, and reach the Bedroom.",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ],
+      "hi": [
+        {
+          "title": "Bedroom → Bedroom",
+          "text": "Bedroom से शुरू करें और Bedroom में जाएं।",
+          "start": "vp_1",
+          "goal": "vp_1"
+        }
+      ],
+      "te": [
+        {
+          "title": "Bedroom → Bedroom",
+          "text": "Bedroom నుండి Bedroomకి వెళ్లండి.",
           "start": "vp_1",
           "goal": "vp_1"
         }

@@ -375,15 +375,6 @@ function updateWalkingPace(val) {
     if (fovText) {
         fovText.textContent = `FOV: ${Math.round(threeState.panoFov)}° | Pace: ${pace.toFixed(1)}x`;
     }
-
-    if (agentState.isPlaying) {
-        clearInterval(agentState.timer);
-        const stepIntervalMs = Math.round(2200 / Math.max(0.35, agentState.walkingPace));
-        agentState.timer = setInterval(() => {
-            const keepGoing = stepSimulation();
-            if (!keepGoing) stopSimulationTimer();
-        }, stepIntervalMs);
-    }
 }
 
 function onToggleVisualLayers() {
@@ -1380,6 +1371,79 @@ function computeConstrainedPath(startNodeId, goalNodeId, intermediateConstraints
     return fullPath;
 }
 
+function getDoorwayWaypoints(fromNode, toNode, door, map) {
+    const isVertical = (door.angle === Math.PI / 2 || door.orientation === "vertical");
+    const offset = 26; // approx 1.17 meters in 3D: comfortable architectural clearance inside rooms in front of the door
+
+    let approachX = door.x, approachY = door.y;
+    let exitX = door.x, exitY = door.y;
+
+    if (isVertical) {
+        // Wall runs vertically along Y. Door normal is along X.
+        const fromIsLeft = fromNode.x < door.x;
+        approachX = fromIsLeft ? door.x - offset : door.x + offset;
+        exitX = fromIsLeft ? door.x + offset : door.x - offset;
+    } else {
+        // Wall runs horizontally along X. Door normal is along Y.
+        const fromIsTop = fromNode.y < door.y;
+        approachY = fromIsTop ? door.y - offset : door.y + offset;
+        exitY = fromIsTop ? door.y + offset : door.y - offset;
+    }
+
+    const pFrom = map2DTo3D(fromNode.x, fromNode.y);
+    const pApp = map2DTo3D(approachX, approachY);
+    const pThresh = map2DTo3D(door.x, door.y);
+    const pExit = map2DTo3D(exitX, exitY);
+    const pTarget = map2DTo3D(toNode.x, toNode.y);
+
+    const yawToApp = Math.atan2(pApp.x - pFrom.x, pApp.z - pFrom.z);
+    const yawThroughDoor = Math.atan2(pThresh.x - pApp.x, pThresh.z - pApp.z);
+    const yawToTarget = Math.atan2(pTarget.x - pExit.x, pTarget.z - pExit.z);
+
+    return [
+        {
+            name: "approach",
+            x3D: pApp.x,
+            z3D: pApp.z,
+            x2D: approachX,
+            y2D: approachY,
+            yaw: yawToApp,
+            isApproach: true
+        },
+        {
+            name: "threshold",
+            x3D: pThresh.x,
+            z3D: pThresh.z,
+            x2D: door.x,
+            y2D: door.y,
+            yaw: yawThroughDoor,
+            isThreshold: true,
+            isDoorway: true
+        },
+        {
+            name: "exit",
+            x3D: pExit.x,
+            z3D: pExit.z,
+            x2D: exitX,
+            y2D: exitY,
+            yaw: yawThroughDoor,
+            isExit: true,
+            enteredRoomId: toNode.roomId
+        },
+        {
+            name: "target",
+            x3D: pTarget.x,
+            z3D: pTarget.z,
+            x2D: toNode.x,
+            y2D: toNode.y,
+            yaw: yawToTarget,
+            isTarget: true,
+            isFinal: true,
+            targetNodeId: toNode.id
+        }
+    ];
+}
+
 function walkSingleHop(fromNodeId, toNodeId, onDone) {
     const map = getActiveMap();
     if (!map) return;
@@ -1411,56 +1475,33 @@ function walkSingleHop(fromNodeId, toNodeId, onDone) {
     threeState.currentWaypointIndex = 0;
 
     if (door) {
-        // Multi-waypoint continuous walk: Approach doorway -> Step across threshold -> Walk to destination
-        const pDoor = map2DTo3D(door.x, door.y);
-        const yawToDoor = -(Math.atan2(door.y - fromNode.y, door.x - fromNode.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2;
-        threeState.walkWaypoints.push({
-            x3D: pDoor.x,
-            z3D: pDoor.z,
-            x2D: door.x,
-            y2D: door.y,
-            yaw: yawToDoor,
-            isDoorway: true
-        });
-
-        const pTarget = map2DTo3D(toNode.x, toNode.y);
-        const yawToTarget = -(Math.atan2(toNode.y - door.y, toNode.x - door.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2;
-        threeState.walkWaypoints.push({
-            x3D: pTarget.x,
-            z3D: pTarget.z,
-            x2D: toNode.x,
-            y2D: toNode.y,
-            yaw: yawToTarget,
-            isFinal: true,
-            targetNodeId: toNode.id
-        });
-
-        threeState.camDesiredPos.set(pDoor.x, 1.55, pDoor.z);
-        threeState.orbitDesiredTarget.set(pDoor.x, 0.9, pDoor.z);
-        threeState.desiredPanoYaw = yawToDoor;
-        agentState.targetX = door.x;
-        agentState.targetY = door.y;
-        agentState.headingDeg = Math.round(Math.atan2(door.y - fromNode.y, door.x - fromNode.x) * 180 / Math.PI);
+        // Multi-waypoint continuous walk: Approach doorway -> Step through threshold -> Enter room -> Reach target
+        threeState.walkWaypoints = getDoorwayWaypoints(fromNode, toNode, door, map);
     } else {
         const pTarget = map2DTo3D(toNode.x, toNode.y);
-        const yawToTarget = -(Math.atan2(toNode.y - fromNode.y, toNode.x - fromNode.x) * 180 / Math.PI) * Math.PI / 180 + Math.PI / 2;
-        threeState.walkWaypoints.push({
-            x3D: pTarget.x,
-            z3D: pTarget.z,
-            x2D: toNode.x,
-            y2D: toNode.y,
-            yaw: yawToTarget,
-            isFinal: true,
-            targetNodeId: toNode.id
-        });
-
-        threeState.camDesiredPos.set(pTarget.x, 1.55, pTarget.z);
-        threeState.orbitDesiredTarget.set(pTarget.x, 0.9, pTarget.z);
-        threeState.desiredPanoYaw = yawToTarget;
-        agentState.targetX = toNode.x;
-        agentState.targetY = toNode.y;
-        agentState.headingDeg = Math.round(Math.atan2(toNode.y - fromNode.y, toNode.x - fromNode.x) * 180 / Math.PI);
+        const pFrom = map2DTo3D(fromNode.x, fromNode.y);
+        const yawToTarget = Math.atan2(pTarget.x - pFrom.x, pTarget.z - pFrom.z);
+        threeState.walkWaypoints = [
+            {
+                name: "target",
+                x3D: pTarget.x,
+                z3D: pTarget.z,
+                x2D: toNode.x,
+                y2D: toNode.y,
+                yaw: yawToTarget,
+                isFinal: true,
+                targetNodeId: toNode.id
+            }
+        ];
     }
+
+    const firstWp = threeState.walkWaypoints[0];
+    threeState.camDesiredPos.set(firstWp.x3D, 1.55, firstWp.z3D);
+    threeState.orbitDesiredTarget.set(firstWp.x3D, 0.9, firstWp.z3D);
+    threeState.desiredPanoYaw = firstWp.yaw;
+    agentState.targetX = firstWp.x2D;
+    agentState.targetY = firstWp.y2D;
+    agentState.headingDeg = Math.round(((Math.PI / 2 - firstWp.yaw) * 180) / Math.PI) % 360;
 
     agentState.isWalking = true;
     agentState.onHopComplete = () => {
@@ -1499,6 +1540,9 @@ function resetSimulation(previewOnly = false) {
 
     agentState.stepIndex = 0;
     agentState.isWalking = false;
+    agentState.onHopComplete = null;
+    threeState.walkWaypoints = [];
+    threeState.currentWaypointIndex = 0;
     const startNode = map.nodes.find(n => n.id === agentState.startNodeId) || map.nodes[0];
     agentState.executedNodes = startNode ? [startNode.id] : [];
 
@@ -1606,7 +1650,7 @@ function runFullSimulation() {
                 updateMetricsDisplay(true);
                 showToast("Goal reached! Navigation Success.", "success");
             } else if (agentState.isPlaying) {
-                agentState.stepTimer = setTimeout(runNextHop, Math.max(120, Math.round(350 / agentState.walkingPace)));
+                agentState.stepTimer = setTimeout(runNextHop, 40);
             }
         });
     }
@@ -2678,6 +2722,22 @@ function create3DDoorwayMesh(x2d, y2d, orientation, nodeUId, nodeVId, roomU, roo
     threshMesh.position.y = 0.03;
     group.add(threshMesh);
 
+    // Corridor side walls (jambs) to enclose the transition corridor and eliminate black voids
+    const jambMat = new THREE.MeshBasicMaterial({
+        color: 0x1e2325,
+        transparent: true,
+        opacity: 0.65,
+        side: THREE.DoubleSide,
+        depthWrite: false
+    });
+    const leftJamb = new THREE.Mesh(new THREE.BoxGeometry(0.06, doorH, 2.6), jambMat);
+    leftJamb.position.set(-doorW / 2 - 0.03, doorH / 2, 0);
+    group.add(leftJamb);
+
+    const rightJamb = new THREE.Mesh(new THREE.BoxGeometry(0.06, doorH, 2.6), jambMat);
+    rightJamb.position.set(doorW / 2 + 0.03, doorH / 2, 0);
+    group.add(rightJamb);
+
     // Warm overhead doorway light so the transition zone is continuously illuminated
     const doorPointLight = new THREE.PointLight(0xfef08a, 1.8, 9.0);
     doorPointLight.position.set(0, doorH - 0.15, 0);
@@ -3043,10 +3103,6 @@ function onClicked3DHotspot(nodeId, autoSwitchToPanorama = false, isDirectUserAc
     const targetNode = map.nodes.find(n => n.id === nodeId);
     if (!targetNode) return;
 
-    if (autoSwitchToPanorama && threeState.cameraMode !== "panorama") {
-        set3DCameraMode("panorama");
-    }
-
     if (nodeId === agentState.currentNodeId) return;
 
     // Plan connected path from current node to clicked target
@@ -3098,7 +3154,6 @@ function animateThreeLoop(timestamp) {
     if (threeState.walkWaypoints && threeState.walkWaypoints.length > threeState.currentWaypointIndex) {
         const currWp = threeState.walkWaypoints[threeState.currentWaypointIndex];
         threeState.camDesiredPos.set(currWp.x3D, 1.55, currWp.z3D);
-        threeState.orbitDesiredTarget.set(currWp.x3D, 0.9, currWp.z3D);
         agentState.targetX = currWp.x2D;
         agentState.targetY = currWp.y2D;
         if (currWp.yaw !== undefined) {
@@ -3109,7 +3164,7 @@ function animateThreeLoop(timestamp) {
     const dx3D = threeState.camDesiredPos.x - threeState.camCurrentPos.x;
     const dz3D = threeState.camDesiredPos.z - threeState.camCurrentPos.z;
     const dist3D = Math.hypot(dx3D, dz3D);
-    const isWalking = dist3D > 0.05;
+    const isWalking = dist3D > 0.04;
 
     if (isWalking) {
         const stepDist = Math.min(dist3D, walkSpeed * dt);
@@ -3120,12 +3175,30 @@ function animateThreeLoop(timestamp) {
         threeState.camCurrentPos.x = threeState.camDesiredPos.x;
         threeState.camCurrentPos.z = threeState.camDesiredPos.z;
 
+        // Check if current waypoint crossed doorway into connected room
+        if (threeState.walkWaypoints && threeState.walkWaypoints.length > threeState.currentWaypointIndex) {
+            const completedWp = threeState.walkWaypoints[threeState.currentWaypointIndex];
+            if (completedWp.enteredRoomId) {
+                const map = getActiveMap();
+                if (map) {
+                    const enteredRoom = map.rooms.find(r => r.id === completedWp.enteredRoomId);
+                    if (enteredRoom) {
+                        const badge = document.getElementById("currentRoomBadge");
+                        if (badge) badge.textContent = enteredRoom.name;
+                        const lmBadge = document.getElementById("egoLandmarksText");
+                        if (lmBadge && enteredRoom.landmarks) {
+                            lmBadge.textContent = `3D Models: ${enteredRoom.landmarks.join(", ")}`;
+                        }
+                    }
+                }
+            }
+        }
+
         // Advance to next waypoint (e.g. crossing doorway threshold into connected room)
         if (threeState.walkWaypoints && threeState.currentWaypointIndex < threeState.walkWaypoints.length - 1) {
             threeState.currentWaypointIndex++;
             const nextWp = threeState.walkWaypoints[threeState.currentWaypointIndex];
             threeState.camDesiredPos.set(nextWp.x3D, 1.55, nextWp.z3D);
-            threeState.orbitDesiredTarget.set(nextWp.x3D, 0.9, nextWp.z3D);
             agentState.targetX = nextWp.x2D;
             agentState.targetY = nextWp.y2D;
             if (nextWp.yaw !== undefined) {
@@ -3147,7 +3220,7 @@ function animateThreeLoop(timestamp) {
         const dx2d = agentState.targetX - agentState.x;
         const dy2d = agentState.targetY - agentState.y;
         const dist2D = Math.hypot(dx2d, dy2d);
-        if (dist2D > 0.5) {
+        if (dist2D > 0.4) {
             const speed2D = walkSpeed / SCALE_3D; // canvas pixels per second
             const step2D = Math.min(dist2D, speed2D * dt);
             agentState.x += (dx2d / dist2D) * step2D;
@@ -3157,7 +3230,7 @@ function animateThreeLoop(timestamp) {
             agentState.x = agentState.targetX;
             agentState.y = agentState.targetY;
         }
-        if (dist2D > 0.5 || isWalking) {
+        if (dist2D > 0.4 || isWalking) {
             renderCanvas();
         }
     }
@@ -3168,26 +3241,26 @@ function animateThreeLoop(timestamp) {
         } else if (threeState.cameraMode === "dollhouse") {
             threeState.orbitTheta += 0.004;
         }
-    } else if (threeState.desiredPanoYaw !== undefined && isWalking && !threeState.isDragging && threeState.cameraMode === "panorama") {
-        // Smoothly orient head towards walking path only while walking
+    } else if (threeState.desiredPanoYaw !== undefined && isWalking && !threeState.isDragging) {
+        // Smoothly orient head and avatar towards walking path only while walking
         let diffYaw = (threeState.desiredPanoYaw - threeState.panoYaw) % (Math.PI * 2);
         if (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
         if (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
         if (Math.abs(diffYaw) > 0.005) {
-            threeState.panoYaw += diffYaw * Math.min(1.0, 4.0 * dt);
+            threeState.panoYaw += diffYaw * Math.min(1.0, 5.0 * dt);
         }
     }
 
-    threeState.orbitTarget.lerp(threeState.orbitDesiredTarget, Math.min(1.0, 5.0 * dt));
+    // Smoothly orbit camera follows the continuous avatar position in dollhouse mode
+    threeState.orbitDesiredTarget.set(threeState.camCurrentPos.x, 0.9, threeState.camCurrentPos.z);
+    threeState.orbitTarget.lerp(threeState.orbitDesiredTarget, Math.min(1.0, 6.0 * dt));
 
     if (threeState.agentMeshGroup) {
         const walkBob = isWalking
             ? Math.abs(Math.sin(agentState.walkBobPhase)) * (0.06 * Math.min(1.0, agentState.walkingPace))
             : 0;
         threeState.agentMeshGroup.position.set(threeState.camCurrentPos.x, walkBob, threeState.camCurrentPos.z);
-        if (isWalking && threeState.desiredPanoYaw !== undefined) {
-            threeState.agentMeshGroup.rotation.y = threeState.desiredPanoYaw;
-        }
+        threeState.agentMeshGroup.rotation.y = threeState.panoYaw;
     }
 
     if (threeState.cameraMode === "panorama") {

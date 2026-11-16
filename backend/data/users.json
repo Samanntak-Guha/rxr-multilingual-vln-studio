@@ -14,5 +14,13 @@
     "salt": "4ac834138c42a17fca130fbbaa5bb1e9",
     "passwordHash": "a7bc663f23c41f40b31713fb498b288e4cfc64c6379d0dc44842a87132cdcfa0afd90d899f76011da729158082c6bb215485b50895d5d26ee01ef2c7b0ea1584",
     "createdAt": "2026-11-16T16:18:32.546Z"
+  },
+  "abhishekgandu@gandu.com": {
+    "id": "usr_1838fe77a1f0",
+    "email": "abhishekgandu@gandu.com",
+    "name": "ABHISHEK",
+    "salt": "77c7fee5c56bc8c0b3df5b7cd264c7d9",
+    "passwordHash": "7f0405a939e5b15a5d1763c1e10e6d3b6183216a248e469a1de1cf21722b23454874e73addfac9694ce774302eb59b69dd5b6d8a132ad10aa62e924e14a3474b",
+    "createdAt": "2026-11-16T17:45:28.133Z"
   }
 }
