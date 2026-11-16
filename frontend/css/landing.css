@@ -1,0 +1,562 @@
+/* ==========================================================================
+   RxR Multilingual VLN Studio — Refined Performance & Ambient Design System
+   Scoped exclusively to #viewLanding and .landing-page elements.
+   Zero regression on studio dashboard, Three.js engine, or auth modules.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Typographic Variables & System Fonts
+   -------------------------------------------------------------------------- */
+:root {
+    --font-display: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-serif: 'Instrument Serif', Georgia, serif;
+    --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'Space Mono', 'JetBrains Mono', monospace;
+
+    /* Architectural Editorial Warm Ivory Tokens */
+    --ivory-bg: #EAE6DD;
+    --ivory-surface: #DFDAD0;
+    --ivory-border: #C8C2B6;
+    --ivory-text: #141719;
+    --ivory-muted: #575D5F;
+    --ivory-accent: #2A483E;
+}
+
+/* --------------------------------------------------------------------------
+   Typography Utility Classes (Refined Balanced System)
+   -------------------------------------------------------------------------- */
+.landing-display-bold {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.08;
+}
+
+.landing-display-semibold {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.landing-font-serif {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.1;
+}
+
+.landing-font-mono {
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+}
+
+.landing-font-sans {
+    font-family: var(--font-sans);
+}
+
+/* Fluid Clamps for Headlines */
+.hero-editorial-headline {
+    font-family: var(--font-display);
+    font-size: clamp(2.35rem, 5vw, 4.85rem);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+    text-transform: uppercase;
+}
+
+.hero-serif-accent {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(1.9rem, 3.8vw, 3.85rem);
+    line-height: 1.12;
+    font-weight: 400;
+    color: #B8D96B;
+}
+
+.section-editorial-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.95rem, 3.5vw, 3.45rem);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+}
+
+.section-serif-subtitle {
+    font-family: var(--font-serif);
+    font-style: italic;
+    font-size: clamp(1.2rem, 2.2vw, 2.2rem);
+    line-height: 1.2;
+    font-weight: 400;
+}
+
+.caption-mono-tech {
+    font-family: var(--font-mono);
+    font-size: clamp(0.6875rem, 0.9vw, 0.8125rem);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+/* --------------------------------------------------------------------------
+   Scoped Container & Stage
+   -------------------------------------------------------------------------- */
+#viewLanding {
+    position: relative;
+    background-color: #121516;
+    color: #F0EEE7;
+    overflow-x: hidden;
+    width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Lightweight Ambient Lighting System (Hardware-Accelerated CSS)
+   -------------------------------------------------------------------------- */
+.landing-ambient-stage {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+    contain: strict;
+}
+
+.ambient-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    will-change: transform;
+}
+
+/* Lime-green ambient light */
+.ambient-orb-lime {
+    width: 580px;
+    height: 580px;
+    top: -80px;
+    left: -60px;
+    background: radial-gradient(circle, rgba(184, 217, 107, 0.09) 0%, rgba(184, 217, 107, 0.03) 45%, transparent 70%);
+    filter: blur(85px);
+    animation: driftAmbientLime 32s ease-in-out infinite alternate;
+}
+
+/* Muted cyan highlight */
+.ambient-orb-cyan {
+    width: 680px;
+    height: 680px;
+    top: 25%;
+    right: -120px;
+    background: radial-gradient(circle, rgba(85, 191, 208, 0.075) 0%, rgba(85, 191, 208, 0.02) 50%, transparent 70%);
+    filter: blur(95px);
+    animation: driftAmbientCyan 38s ease-in-out infinite alternate;
+}
+
+/* Architect sage depth */
+.ambient-orb-sage {
+    width: 520px;
+    height: 520px;
+    bottom: 12%;
+    left: 15%;
+    background: radial-gradient(circle, rgba(120, 156, 145, 0.08) 0%, rgba(120, 156, 145, 0.02) 48%, transparent 70%);
+    filter: blur(85px);
+    animation: driftAmbientSage 35s ease-in-out infinite alternate;
+}
+
+/* Warm-white architectural light leak */
+.ambient-orb-warm {
+    width: 440px;
+    height: 440px;
+    top: 55%;
+    right: 22%;
+    background: radial-gradient(circle, rgba(240, 238, 231, 0.04) 0%, rgba(240, 238, 231, 0.01) 50%, transparent 70%);
+    filter: blur(100px);
+    animation: driftAmbientWarm 42s ease-in-out infinite alternate;
+}
+
+@keyframes driftAmbientLime {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(60px, 70px, 0) scale(1.06); }
+    100% { transform: translate3d(-35px, 40px, 0) scale(0.96); }
+}
+
+@keyframes driftAmbientCyan {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-65px, -50px, 0) scale(1.05); }
+    100% { transform: translate3d(40px, 55px, 0) scale(0.95); }
+}
+
+@keyframes driftAmbientSage {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(45px, -55px, 0) scale(1.04); }
+    100% { transform: translate3d(-30px, 25px, 0) scale(0.96); }
+}
+
+@keyframes driftAmbientWarm {
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-40px, 45px, 0) scale(1.05); }
+    100% { transform: translate3d(30px, -35px, 0) scale(0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ambient-orb {
+        animation: none !important;
+        opacity: 0.05;
+    }
+}
+
+/* Architectural Restrained Grid Pattern */
+.landing-arch-grid {
+    position: absolute;
+    inset: 0;
+    background-image: 
+        linear-gradient(to right, rgba(57, 65, 68, 0.18) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(57, 65, 68, 0.18) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+/* Subtle Cursor Ambient Follower (Zero CPU Lag) */
+#landingCursorGlow {
+    position: fixed;
+    width: 260px;
+    height: 260px;
+    margin-left: -130px;
+    margin-top: -130px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1;
+    background: radial-gradient(circle, rgba(184, 217, 107, 0.05) 0%, rgba(85, 191, 208, 0.02) 40%, transparent 70%);
+    filter: blur(35px);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    will-change: transform;
+}
+
+#landingCursorGlow.active {
+    opacity: 1;
+}
+
+@media (pointer: coarse), (prefers-reduced-motion: reduce) {
+    #landingCursorGlow {
+        display: none !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Scroll Animation System (Native CSS + IntersectionObserver)
+   -------------------------------------------------------------------------- */
+.scroll-reveal {
+    opacity: 0;
+    transform: translate3d(0, 24px, 0);
+    transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+}
+
+.scroll-reveal.is-revealed {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+.delay-100 { transition-delay: 0.10s; }
+.delay-150 { transition-delay: 0.15s; }
+.delay-200 { transition-delay: 0.20s; }
+.delay-300 { transition-delay: 0.30s; }
+.delay-400 { transition-delay: 0.40s; }
+
+@media (prefers-reduced-motion: reduce) {
+    .scroll-reveal {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Interactive Navigation Links & Underline
+   -------------------------------------------------------------------------- */
+.hero-telemetry-hud {
+    position: absolute;
+    bottom: 2rem;
+    right: 2.5rem;
+    z-index: 15;
+    background: rgba(23, 26, 28, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(57, 65, 68, 0.85);
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    font-family: var(--font-mono);
+    max-width: 320px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+.nav-link-interactive {
+    position: relative;
+    padding-bottom: 4px;
+    transition: color 0.2s ease;
+}
+
+.nav-link-interactive::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0%;
+    height: 1.5px;
+    background: #B8D96B;
+    transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link-interactive:hover::after,
+.nav-link-interactive.active::after {
+    width: 100%;
+}
+
+.nav-link-interactive:hover {
+    color: #F0EEE7;
+}
+
+/* --------------------------------------------------------------------------
+   Magnetic Buttons & Microinteractions
+   -------------------------------------------------------------------------- */
+.magnetic-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+    will-change: transform;
+}
+
+.magnetic-btn:active {
+    transform: scale(0.97) !important;
+}
+
+.magnetic-btn-primary {
+    background: #B8D96B;
+    color: #121516;
+    font-weight: 700;
+    border: 1px solid #c9ea7d;
+    box-shadow: 0 4px 16px rgba(184, 217, 107, 0.22);
+}
+
+.magnetic-btn-primary:hover {
+    background: #cbf07b;
+    box-shadow: 0 6px 24px rgba(184, 217, 107, 0.35);
+}
+
+.magnetic-btn-primary .cta-arrow {
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.magnetic-btn-primary:hover .cta-arrow {
+    transform: translate3d(4px, 0, 0);
+}
+
+.magnetic-btn-secondary {
+    background: #24292B;
+    color: #F0EEE7;
+    font-weight: 600;
+    border: 1px solid #394144;
+}
+
+.magnetic-btn-secondary:hover {
+    background: #2B3234;
+    border-color: #55BFD0;
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(85, 191, 208, 0.16);
+}
+
+/* --------------------------------------------------------------------------
+   Editorial Warm Ivory Section
+   -------------------------------------------------------------------------- */
+.editorial-ivory-wrapper {
+    background-color: var(--ivory-bg);
+    color: var(--ivory-text);
+    position: relative;
+    border-top: 1px solid var(--ivory-border);
+    border-bottom: 1px solid var(--ivory-border);
+}
+
+.editorial-ivory-wrapper .landing-arch-grid {
+    background-image: 
+        linear-gradient(to right, rgba(168, 160, 146, 0.22) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(168, 160, 146, 0.22) 1px, transparent 1px);
+    background-size: 48px 48px;
+    opacity: 0.75;
+}
+
+/* --------------------------------------------------------------------------
+   Continuous Trilingual Marquee
+   -------------------------------------------------------------------------- */
+.landing-marquee-container {
+    display: flex;
+    overflow: hidden;
+    user-select: none;
+    gap: 2rem;
+}
+
+.landing-marquee-content {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 2rem;
+    min-width: 100%;
+    animation: marqueeScroll 34s linear infinite;
+    will-change: transform;
+}
+
+@keyframes marqueeScroll {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(calc(-100% - 2rem), 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-marquee-content {
+        animation: none !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   Interactive Spatial Matrix Viewports (Section 03)
+   -------------------------------------------------------------------------- */
+.spatial-matrix-frame {
+    background: #171A1C;
+    border: 1px solid #394144;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55);
+    position: relative;
+}
+
+.matrix-tab-btn {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    padding: 0.65rem 1.15rem;
+    border-radius: 8px;
+    color: #A8ADA9;
+    background: transparent;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.matrix-tab-btn:hover {
+    color: #F0EEE7;
+    background: #24292B;
+}
+
+.matrix-tab-btn.active {
+    color: #121516;
+    background: #B8D96B;
+    font-weight: 700;
+    border-color: #B8D96B;
+    box-shadow: 0 2px 10px rgba(184, 217, 107, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   Section 04: The Embodied Workflow Cards
+   -------------------------------------------------------------------------- */
+.workflow-step-card {
+    background: #1A1F21;
+    border: 1px solid #343C3F;
+    border-radius: 14px;
+    padding: 1.75rem;
+    position: relative;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.workflow-step-card:hover {
+    transform: translate3d(0, -3px, 0);
+    border-color: #55BFD0;
+    box-shadow: 0 10px 28px rgba(85, 191, 208, 0.10);
+}
+
+.step-watermark-number {
+    font-family: var(--font-display);
+    font-size: 4rem;
+    line-height: 1;
+    font-weight: 700;
+    color: rgba(57, 65, 68, 0.28);
+    position: absolute;
+    top: 1rem;
+    right: 1.25rem;
+    pointer-events: none;
+    transition: color 0.25s ease;
+}
+
+.workflow-step-card:hover .step-watermark-number {
+    color: rgba(85, 191, 208, 0.22);
+}
+
+/* --------------------------------------------------------------------------
+   Section 05: Token Attention Interactive Playground
+   -------------------------------------------------------------------------- */
+.token-interactive-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    background: #24292B;
+    border: 1px solid #394144;
+    color: #F0EEE7;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.token-interactive-chip:hover, .token-interactive-chip.active {
+    background: rgba(184, 217, 107, 0.16);
+    border-color: #B8D96B;
+    color: #B8D96B;
+    transform: translate3d(0, -1px, 0);
+    box-shadow: 0 4px 12px rgba(184, 217, 107, 0.2);
+}
+
+.token-bar-fill {
+    transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.35s ease;
+}
+
+/* --------------------------------------------------------------------------
+   Scroll Down Indicator
+   -------------------------------------------------------------------------- */
+.scroll-indicator-line {
+    width: 1.5px;
+    height: 36px;
+    background: linear-gradient(to bottom, #B8D96B 0%, transparent 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.scroll-indicator-line::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #FFFFFF;
+    animation: scrollIndicatorAnim 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes scrollIndicatorAnim {
+    0% { transform: translate3d(0, -100%, 0); }
+    100% { transform: translate3d(0, 100%, 0); }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive Rules
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    .ambient-orb-lime { width: 340px; height: 340px; filter: blur(65px); }
+    .ambient-orb-cyan { width: 380px; height: 380px; filter: blur(70px); }
+    .ambient-orb-sage { display: none; }
+    .ambient-orb-warm { display: none; }
+    .landing-marquee-container { gap: 1rem; }
+}

@@ -24,8 +24,8 @@
         "name": "Central Hallway",
         "name_hi": "गलियारा",
         "name_te": "హాల్‌వే",
-        "x": 302,
-        "y": 115,
+        "x": 299,
+        "y": 116,
         "w": 170,
         "h": 150,
         "color": "#8b5cf6",
@@ -114,8 +114,8 @@
       },
       {
         "id": "vp_3",
-        "x": 387,
-        "y": 185,
+        "x": 384,
+        "y": 186,
         "roomId": "r_hallway",
         "label": "Hall Center"
       },

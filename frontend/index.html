@@ -6,9 +6,12 @@
     <title>RxR Multilingual VLN Studio — Embodied Spatial AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/landing.css">
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -63,438 +66,621 @@
          ====================================================================== -->
     <div id="viewLanding" class="view-container view-active flex flex-col min-h-screen relative z-10">
 
-        <!-- Landing Navigation Bar -->
-        <header class="w-full border-b border-[#394144]/80 bg-[#1E2325]/90 backdrop-blur-md sticky top-0 z-40 px-6 py-3.5">
+        <!-- ==================================================================
+             LIGHTWEIGHT AMBIENT LIGHTING SYSTEM (Hardware-Accelerated CSS)
+             ================================================================== -->
+        <div class="landing-ambient-stage" aria-hidden="true">
+            <div class="ambient-orb ambient-orb-lime"></div>
+            <div class="ambient-orb ambient-orb-cyan"></div>
+            <div class="ambient-orb ambient-orb-sage"></div>
+            <div class="ambient-orb ambient-orb-warm"></div>
+            <div class="landing-arch-grid"></div>
+        </div>
+
+        <!-- ==================================================================
+             LANDING NAVIGATION BAR (Awwwards Architectural Bar)
+             ================================================================== -->
+        <header class="w-full border-b border-[#394144]/80 bg-[#171A1C]/90 backdrop-blur-md sticky top-0 z-40 px-6 py-4">
             <div class="max-w-[1400px] mx-auto flex items-center justify-between gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#B8D96B]">
+                <a href="#viewLanding" class="flex items-center gap-3 group">
+                    <div class="w-9 h-9 rounded-lg bg-[#24292B] border border-[#394144] group-hover:border-[#B8D96B] flex items-center justify-center text-[#B8D96B] transition">
                         <i class="fa-solid fa-compass-drafting text-base"></i>
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="font-bold text-base text-[#F0EEE7] tracking-tight">RxR Multilingual VLN</span>
-                            <span class="px-2 py-0.5 text-[10px] font-mono uppercase bg-[#2B3234] text-[#789C91] border border-[#394144] rounded">v2.4</span>
+                            <span class="landing-display-bold text-lg text-[#F0EEE7] tracking-tight">RxR Multilingual VLN</span>
+                            <span class="px-2 py-0.5 text-[10px] font-mono uppercase bg-[#24292B] text-[#789C91] border border-[#394144] rounded">v2.4</span>
                         </div>
-                        <p class="text-[11px] text-[#A8ADA9] hidden sm:block">Vision-and-Language Navigation & Topological Studio</p>
+                        <p class="caption-mono-tech text-[#777F7D] hidden sm:block">Embodied Spatial Intelligence & Topological Studio</p>
                     </div>
-                </div>
+                </a>
 
-                <!-- Navigation Links -->
-                <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-[#A8ADA9]">
-                    <a href="#featuresSection" class="hover:text-[#F0EEE7] transition">Platform Capabilities</a>
-                    <a href="#architectureSection" class="hover:text-[#F0EEE7] transition">3D Viewport & Builder</a>
-                    <a href="#pipelineSection" class="hover:text-[#F0EEE7] transition">Embodied Pipeline</a>
-                    <a href="#specsSection" class="hover:text-[#F0EEE7] transition">Languages & Metrics</a>
+                <!-- Navigation Links with Animated Underline and ScrollSpy -->
+                <nav class="hidden lg:flex items-center gap-8 caption-mono-tech text-[#A8ADA9]">
+                    <a href="#conceptSection" class="nav-link-interactive hover:text-[#F0EEE7] transition flex items-center gap-1.5">
+                        <span class="text-[#B8D96B]">01</span>
+                        <span>CONCEPT</span>
+                    </a>
+                    <a href="#environmentSection" class="nav-link-interactive hover:text-[#F0EEE7] transition flex items-center gap-1.5">
+                        <span class="text-[#55BFD0]">02</span>
+                        <span>VIEWPORTS</span>
+                    </a>
+                    <a href="#workflowSection" class="nav-link-interactive hover:text-[#F0EEE7] transition flex items-center gap-1.5">
+                        <span class="text-[#789C91]">03</span>
+                        <span>WORKFLOW</span>
+                    </a>
+                    <a href="#intelligenceSection" class="nav-link-interactive hover:text-[#F0EEE7] transition flex items-center gap-1.5">
+                        <span class="text-[#E5AD69]">04</span>
+                        <span>INTELLIGENCE</span>
+                    </a>
                 </nav>
 
-                <!-- Auth Buttons Slot -->
+                <!-- Auth Buttons Slot (Dynamically Managed by AuthManager) -->
                 <div id="landingNavUserSlot" class="flex items-center gap-2.5">
-                    <button onclick="AuthManager.navigateTo('login')" class="btn-secondary text-xs font-semibold py-2 px-3.5 rounded-lg transition">
+                    <button onclick="AuthManager.navigateTo('login')" class="magnetic-btn magnetic-btn-secondary text-xs font-semibold py-2 px-3.5 rounded-lg transition">
                         Sign In
                     </button>
-                    <button onclick="AuthManager.navigateTo('register')" class="btn-primary text-xs font-semibold py-2 px-3.5 rounded-lg flex items-center gap-1.5 transition">
+                    <button onclick="AuthManager.navigateTo('register')" class="magnetic-btn magnetic-btn-primary text-xs font-bold py-2 px-3.5 rounded-lg flex items-center gap-1.5 transition">
                         <span>Get Started</span>
-                        <i class="fa-solid fa-arrow-right text-[11px]"></i>
+                        <i class="fa-solid fa-arrow-right cta-arrow text-[11px]"></i>
                     </button>
                 </div>
             </div>
         </header>
 
-        <!-- Hero Section -->
-        <section class="max-w-[1400px] mx-auto px-6 pt-16 pb-12 flex flex-col items-center text-center relative">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#24292B] border border-[#394144] text-xs font-mono text-[#55BFD0] mb-6">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#72C9A2] animate-pulse"></span>
-                <span>EMBODIED AI • MATTERPORT3D • MULTILINGUAL VLN</span>
-            </div>
-
-            <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[#F0EEE7] max-w-4xl leading-[1.15] mb-6">
-                Spatial Vision-and-Language Navigation Studio
-            </h1>
-
-            <p class="text-sm sm:text-base text-[#A8ADA9] max-w-2xl leading-relaxed mb-9">
-                A research platform integrating natural language navigation across <span class="text-[#F0EEE7] font-medium">English</span>, <span class="text-[#F0EEE7] font-medium">Hindi (हिंदी)</span>, and <span class="text-[#F0EEE7] font-medium">Telugu (తెలుగు)</span> with Matterport3D first-person panoramic viewports, 3D dollhouses, and topological map modeling.
-            </p>
-
-            <!-- Hero Action Buttons -->
-            <div class="flex flex-wrap items-center justify-center gap-3.5 mb-14">
-                <button onclick="AuthManager.navigateTo('studio')" class="btn-primary py-3 px-6 rounded-xl text-sm font-semibold flex items-center gap-2.5 transition">
-                    <i class="fa-solid fa-cube"></i>
-                    <span>Launch Studio</span>
-                </button>
-                <a href="#featuresSection" class="btn-secondary py-3 px-6 rounded-xl text-sm font-medium flex items-center gap-2 transition">
-                    <i class="fa-solid fa-layer-group text-[#789C91]"></i>
-                    <span>Explore Features</span>
-                </a>
-            </div>
-
-            <!-- Key Metric Micro-Counters -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full max-w-3xl mb-12">
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-3.5 text-center">
-                    <div class="text-xl font-bold font-mono text-[#F0EEE7]">3 Languages</div>
-                    <div class="text-[11px] text-[#A8ADA9] mt-0.5">EN • हिंदी • తెలుగు</div>
-                </div>
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-3.5 text-center">
-                    <div class="text-xl font-bold font-mono text-[#55BFD0]">3 Viewports</div>
-                    <div class="text-[11px] text-[#A8ADA9] mt-0.5">Pano • Dollhouse • 2D</div>
-                </div>
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-3.5 text-center">
-                    <div class="text-xl font-bold font-mono text-[#B8D96B]">Standard VLN</div>
-                    <div class="text-[11px] text-[#A8ADA9] mt-0.5">PL • NE • SPL Scoring</div>
-                </div>
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-3.5 text-center">
-                    <div class="text-xl font-bold font-mono text-[#789C91]">0 Dependencies</div>
-                    <div class="text-[11px] text-[#A8ADA9] mt-0.5">Clean Standard Library</div>
-                </div>
-            </div>
-
-            <!-- Visual Showcase: 3D Environment Architecture Preview -->
-            <div id="architectureSection" class="w-full max-w-5xl rounded-2xl bg-[#1E2325] border border-[#394144] shadow-2xl p-4 sm:p-6 text-left">
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[#394144] pb-4 mb-5">
-                    <div class="flex items-center gap-2.5">
-                        <span class="w-2.5 h-2.5 rounded-full bg-[#72C9A2]"></span>
-                        <span class="font-semibold text-sm text-[#F0EEE7]">Matterport3D Environment Engine</span>
-                        <span class="text-xs font-mono text-[#789C91] bg-[#24292B] px-2 py-0.5 rounded border border-[#394144]">Residential & Campus Topologies</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-xs font-mono text-[#A8ADA9]">
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-street-view text-[#55BFD0]"></i> 360° Pano</span>
-                        <span class="text-[#394144]">•</span>
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-cubes text-[#B8D96B]"></i> 3D Dollhouse</span>
-                        <span class="text-[#394144]">•</span>
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-map text-[#789C91]"></i> 2D Blueprint</span>
-                    </div>
+        <!-- ==================================================================
+             SECTION 01: CINEMATIC HERO (First Viewport)
+             ================================================================== -->
+        <section class="relative min-h-[calc(100vh-73px)] flex flex-col justify-center px-6 py-12 overflow-hidden">
+            <div class="max-w-[1400px] w-full mx-auto relative z-10 flex-1 flex flex-col justify-center">
+                <!-- System Tag -->
+                <div class="scroll-reveal inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1A1F21]/80 border border-[#394144] caption-mono-tech text-[#55BFD0] backdrop-blur-md mb-6 w-fit">
+                    <span class="w-2 h-2 rounded-full bg-[#B8D96B] animate-pulse"></span>
+                    <span>EMBODIED SPATIAL AI • MATTERPORT3D SCENES • MULTILINGUAL ROOM-ACROSS-ROOM</span>
                 </div>
 
-                <!-- Architectural Graphic / Technical Overview Diagram -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between text-xs font-semibold text-[#55BFD0] mb-2">
-                                <span>360° PANORAMA</span>
-                                <i class="fa-solid fa-street-view text-sm"></i>
-                            </div>
-                            <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                                First-person viewpoint inspection with interactive 3D floor hotspots and architectural doorways for seamless room-to-room transitions.
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-[#394144] flex items-center justify-between text-[11px] font-mono text-[#777F7D]">
-                            <span>FOV: 75°</span>
-                            <span class="text-[#72C9A2]">Continuous Rollout</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between text-xs font-semibold text-[#B8D96B] mb-2">
-                                <span>3D DOLLHOUSE</span>
-                                <i class="fa-solid fa-cubes text-sm"></i>
-                            </div>
-                            <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                                Orbital 3D camera controls, transparent walls with parametric opacity, wireframe cages, and procedural furniture landmark anchors.
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-[#394144] flex items-center justify-between text-[11px] font-mono text-[#777F7D]">
-                            <span>Orbit Controls</span>
-                            <span class="text-[#B8D96B]">WebGL Hardware Accel</span>
-                        </div>
-                    </div>
-
-                    <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between text-xs font-semibold text-[#789C91] mb-2">
-                                <span>2D TOPOLOGICAL MAP</span>
-                                <i class="fa-solid fa-vector-square text-sm"></i>
-                            </div>
-                            <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                                Interactive blueprint studio for creating custom rooms, placing viewpoint nodes, auto-linking graph edges, and exporting JSON schemas.
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-[#394144] flex items-center justify-between text-[11px] font-mono text-[#777F7D]">
-                            <span>Dijkstra Planner</span>
-                            <span class="text-[#55BFD0]">REST Synced</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Feature Grid Section -->
-        <section id="featuresSection" class="max-w-[1400px] mx-auto px-6 py-16 border-t border-[#394144]/60">
-            <div class="text-center max-w-2xl mx-auto mb-12">
-                <span class="text-xs font-mono uppercase tracking-wider text-[#B8D96B]">Core Capabilities</span>
-                <h2 class="text-2xl sm:text-3xl font-bold text-[#F0EEE7] mt-2 mb-3">Designed for Embodied AI Research</h2>
-                <p class="text-xs sm:text-sm text-[#A8ADA9]">Every component has been engineered to provide precise simulation control, multilingual instruction processing, and spatial feedback.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                <!-- Feature 1 -->
-                <div class="card-architectural p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#B8D96B] mb-3.5">
-                            <i class="fa-solid fa-language text-sm"></i>
-                        </div>
-                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Multilingual Instruction Engine</h3>
-                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                            Process natural language navigation commands across English, Hindi, and Telugu with automatic entity extraction and destination detection.
-                        </p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#789C91]">
-                        EN • HI • TE Preloaded Presets
-                    </div>
+                <!-- Balanced Typographic Composition (Space Grotesk + Instrument Serif) -->
+                <div class="max-w-5xl mb-6">
+                    <h1 class="flex flex-col tracking-tight scroll-reveal delay-100">
+                        <span class="hero-editorial-headline text-[#F0EEE7]">TEACHING EMBODIED MACHINES</span>
+                        <span class="hero-serif-accent my-1">to perceive, reason & navigate</span>
+                        <span class="hero-editorial-headline text-[#F0EEE7]">THE PHYSICAL WORLD.</span>
+                    </h1>
                 </div>
 
-                <!-- Feature 2 -->
-                <div class="card-architectural p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#55BFD0] mb-3.5">
-                            <i class="fa-solid fa-brain text-sm"></i>
-                        </div>
-                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Cross-Modal Token Attention</h3>
-                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                            Visualize natural language focus weights across hops with an interactive token heatmap powered by RxR-M-BERT + LSTM attention weights.
-                        </p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#55BFD0]">
-                        α-Temperature: 0.88 Normalized
-                    </div>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="card-architectural p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#789C91] mb-3.5">
-                            <i class="fa-solid fa-compass-drafting text-sm"></i>
-                        </div>
-                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Room & Topological Map Builder</h3>
-                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                            Construct indoor floorplans with custom dimensions, theme colors, furniture models, and topological edges with auto-linking heuristics.
-                        </p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#789C91]">
-                        Interactive 2D Canvas + 3D Sync
-                    </div>
-                </div>
-
-                <!-- Feature 4 -->
-                <div class="card-architectural p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#72C9A2] mb-3.5">
-                            <i class="fa-solid fa-chart-simple text-sm"></i>
-                        </div>
-                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Standard VLN Evaluation Metrics</h3>
-                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                            Real-time calculation of Path Length (PL), Navigation Error (NE) to goal viewpoint, and Success weighted by Path Length (SPL).
-                        </p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#72C9A2]">
-                        Benchmarked on Matterport3D
-                    </div>
-                </div>
-
-                <!-- Feature 5 -->
-                <div class="card-architectural p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#E5AD69] mb-3.5">
-                            <i class="fa-solid fa-route text-sm"></i>
-                        </div>
-                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Dijkstra Shortest-Path Planning</h3>
-                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                            Optimal path planning policies compute geometric trajectories between viewpoints while accounting for doorway portals and obstacles.
-                        </p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#E5AD69]">
-                        REST API: /api/plan-path
-                    </div>
-                </div>
-
-                <!-- Feature 6 -->
-                <div class="card-architectural p-5 flex flex-col justify-between">
-                    <div>
-                        <div class="w-9 h-9 rounded-lg bg-[#2B3234] border border-[#394144] flex items-center justify-center text-[#D87979] mb-3.5">
-                            <i class="fa-solid fa-shield-halved text-sm"></i>
-                        </div>
-                        <h3 class="font-semibold text-sm text-[#F0EEE7] mb-1.5">Isolated Security & Session Auth</h3>
-                        <p class="text-xs text-[#A8ADA9] leading-relaxed">
-                            Cryptographic password hashing (PBKDF2-SHA512) and bearer session tokens isolated from the AI simulation pipeline.
-                        </p>
-                    </div>
-                    <div class="mt-4 pt-3 border-t border-[#394144] text-[11px] font-mono text-[#D87979]">
-                        Node.js & Python Dual Backends
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Product Demonstration Section -->
-        <section id="pipelineSection" class="max-w-[1400px] mx-auto px-6 py-16 border-t border-[#394144]/60">
-            <div class="text-center max-w-2xl mx-auto mb-12">
-                <span class="text-xs font-mono uppercase tracking-wider text-[#55BFD0]">Navigation Workflow</span>
-                <h2 class="text-2xl sm:text-3xl font-bold text-[#F0EEE7] mt-2 mb-3">How the Spatial AI Navigates</h2>
-                <p class="text-xs sm:text-sm text-[#A8ADA9]">From natural language command to 3D continuous embodiment in 3 stages.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 relative">
-                    <span class="text-3xl font-mono font-bold text-[#394144] absolute top-4 right-4">01</span>
-                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-quote-left text-[#B8D96B]"></i>
-                        Instruction Encoding
-                    </h3>
-                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
-                        Linguistic tokens in English, Hindi, or Telugu are parsed to detect landmarks (e.g. Sofa, Fridge) and resolve the destination node.
-                    </p>
-                    <div class="bg-[#1b2022] border border-[#394144] rounded p-2.5 font-mono text-[11px] text-[#A8ADA9]">
-                        "बैठक कक्ष में सोफा के पास से शुरू करें और रसोईघर में रुकें..."
-                    </div>
-                </div>
-
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 relative">
-                    <span class="text-3xl font-mono font-bold text-[#394144] absolute top-4 right-4">02</span>
-                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-network-wired text-[#55BFD0]"></i>
-                        Topological Graph Route
-                    </h3>
-                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
-                        The backend REST engine determines the optimal sequence of viewpoint hops across rooms through open 3D architectural portals.
-                    </p>
-                    <div class="bg-[#1b2022] border border-[#394144] rounded p-2.5 font-mono text-[11px] text-[#55BFD0]">
-                        Path: [vp_1 ➔ vp_2 ➔ vp_3 ➔ vp_4] (Dijkstra)
-                    </div>
-                </div>
-
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 relative">
-                    <span class="text-3xl font-mono font-bold text-[#394144] absolute top-4 right-4">03</span>
-                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2 flex items-center gap-2">
-                        <i class="fa-solid fa-person-walking text-[#72C9A2]"></i>
-                        Embodied Trajectory
-                    </h3>
-                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
-                        The agent walks at configurable pace (0.4x - 2.5x), smooths yaw orientation, renders 3D trajectory tubes, and records SPL.
-                    </p>
-                    <div class="bg-[#1b2022] border border-[#394144] rounded p-2.5 font-mono text-[11px] text-[#72C9A2]">
-                        PL: 14.8m • NE: 0.0m • SPL: 1.00 (STOP)
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Languages & VLN Metrics Section -->
-        <section id="specsSection" class="max-w-[1400px] mx-auto px-6 py-16 border-t border-[#394144]/60">
-            <div class="text-center max-w-2xl mx-auto mb-12">
-                <span class="text-xs font-mono uppercase tracking-wider text-[#55BFD0]">Evaluation & Benchmarks</span>
-                <h2 class="text-2xl sm:text-3xl font-bold text-[#F0EEE7] mt-2 mb-3">Multilingual Capabilities & VLN Metrics</h2>
-                <p class="text-xs sm:text-sm text-[#A8ADA9]">Rigorous benchmarking across multilingual natural language instructions and standard embodied agent evaluation criteria.</p>
-            </div>
-
-            <!-- Linguistic Diversity Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 hover:border-[#55BFD0]/60 transition">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="px-2 py-0.5 text-[11px] font-mono rounded bg-[#1b2022] text-[#55BFD0] border border-[#394144]">en-US</span>
-                        <i class="fa-solid fa-language text-[#55BFD0]"></i>
-                    </div>
-                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2">English Instruction Parsing</h3>
-                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
-                        Resolves starting viewpoints, destination rooms, and intermediate traversal constraints across complex spatial prepositions and landmarks.
-                    </p>
-                    <div class="text-[11px] font-mono text-[#F0EEE7] bg-[#1E2325] p-2.5 rounded border border-[#394144]">
-                        "Start in Bedroom 1, follow the pathway through the hallway, and reach the Kitchen."
-                    </div>
-                </div>
-
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 hover:border-[#72C9A2]/60 transition">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="px-2 py-0.5 text-[11px] font-mono rounded bg-[#1b2022] text-[#72C9A2] border border-[#394144]">hi-IN</span>
-                        <i class="fa-solid fa-om text-[#72C9A2]"></i>
-                    </div>
-                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2">Hindi Postpositional Parsing</h3>
-                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
-                        Devanagari script tokenization with support for spatial postpositions ("से", "तक", "से होते हुए") and cross-modal attention weight visualization.
-                    </p>
-                    <div class="text-[11px] font-mono text-[#F0EEE7] bg-[#1E2325] p-2.5 rounded border border-[#394144]">
-                        "बैठक कक्ष में सोफा के पास से शुरू करें, गलियारे से होते हुए रसोईघर में रुकें।"
-                    </div>
-                </div>
-
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-5 hover:border-[#E5AD69]/60 transition">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="px-2 py-0.5 text-[11px] font-mono rounded bg-[#1b2022] text-[#E5AD69] border border-[#394144]">te-IN</span>
-                        <i class="fa-solid fa-feather text-[#E5AD69]"></i>
-                    </div>
-                    <h3 class="text-sm font-bold text-[#F0EEE7] mb-2">Telugu Directional Grammar</h3>
-                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-3">
-                        Agglutinative syntax resolution extracting start markers ("నుండి ప్రారంభించి"), intermediate paths ("గుండా"), and arrival goals ("వెళ్ళండి").
-                    </p>
-                    <div class="text-[11px] font-mono text-[#F0EEE7] bg-[#1E2325] p-2.5 rounded border border-[#394144]">
-                        "బెడ్‌రూమ్ 1 నుండి ప్రారంభించి, హాల్‌వే గుండా కిచెన్‌కు వెళ్ళండి."
-                    </div>
-                </div>
-            </div>
-
-            <!-- Embodied VLN Evaluation Metrics -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center">
-                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Success Rate</div>
-                    <div class="text-xl font-bold font-mono text-[#72C9A2]">SR</div>
-                    <div class="text-[11px] text-[#777F7D] mt-1">Binary stop within 1.5m of target viewpoint</div>
-                </div>
-
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center">
-                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Path Efficiency</div>
-                    <div class="text-xl font-bold font-mono text-[#55BFD0]">SPL</div>
-                    <div class="text-[11px] text-[#777F7D] mt-1">Success weighted by normalized shortest path length</div>
-                </div>
-
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center">
-                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Navigation Error</div>
-                    <div class="text-xl font-bold font-mono text-[#E5AD69]">NE (m)</div>
-                    <div class="text-[11px] text-[#777F7D] mt-1">Final Euclidean distance to goal viewpoint</div>
-                </div>
-
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center">
-                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Path Traversed</div>
-                    <div class="text-xl font-bold font-mono text-[#B8D96B]">PL (m)</div>
-                    <div class="text-[11px] text-[#777F7D] mt-1">Cumulative distance walked along graph edges</div>
-                </div>
-
-                <div class="bg-[#24292B] border border-[#394144] rounded-xl p-4 text-center col-span-2 sm:col-span-1">
-                    <div class="text-xs font-mono uppercase text-[#A8ADA9] mb-1">Trajectory Alignment</div>
-                    <div class="text-xl font-bold font-mono text-[#A8ADA9]">nDTW</div>
-                    <div class="text-[11px] text-[#777F7D] mt-1">Dynamic Time Warping against reference route</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Final CTA Banner -->
-        <section class="max-w-[1400px] mx-auto px-6 py-16 w-full">
-            <div class="rounded-2xl bg-[#1E2325] border border-[#394144] p-8 sm:p-12 text-center relative overflow-hidden">
-                <h2 class="text-2xl sm:text-3xl font-bold text-[#F0EEE7] mb-3">Ready to Explore Embodied VLN?</h2>
-                <p class="text-xs sm:text-sm text-[#A8ADA9] max-w-xl mx-auto mb-8">
-                    Launch the interactive studio to build custom topological floorplans, test multilingual navigation policies, and inspect 3D Matterport scenes.
+                <!-- Editorial Subtitle -->
+                <p class="landing-font-sans text-sm sm:text-base text-[#A8ADA9] max-w-2xl leading-relaxed mb-8 font-normal scroll-reveal delay-150">
+                    A spatial computing research platform grounding natural language navigation across <span class="text-[#F0EEE7] font-semibold">English</span>, <span class="text-[#F0EEE7] font-semibold">Hindi (हिंदी)</span>, and <span class="text-[#F0EEE7] font-semibold">Telugu (తెలుగు)</span> into photorealistic Matterport3D viewports, topological graph synthesis, and continuous physical embodiment.
                 </p>
-                <div class="flex flex-wrap items-center justify-center gap-3">
-                    <button onclick="AuthManager.navigateTo('studio')" class="btn-primary py-3 px-6 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
-                        <i class="fa-solid fa-cube"></i>
-                        <span>Launch Studio Now</span>
+
+                <!-- Hero Action Buttons -->
+                <div class="flex flex-wrap items-center gap-3.5 mb-10 scroll-reveal delay-200">
+                    <button onclick="AuthManager.navigateTo('studio')" class="magnetic-btn magnetic-btn-primary py-3.5 px-7 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-3 transition shadow-lg">
+                        <i class="fa-solid fa-cube text-base"></i>
+                        <span>EXPLORE THE STUDIO</span>
+                        <i class="fa-solid fa-arrow-right cta-arrow text-xs"></i>
                     </button>
-                    <button onclick="AuthManager.navigateTo('login')" class="btn-secondary py-3 px-6 rounded-xl text-sm font-medium transition">
-                        Sign In with Credentials
-                    </button>
+                    <a href="#conceptSection" class="magnetic-btn magnetic-btn-secondary py-3.5 px-7 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2.5 transition">
+                        <i class="fa-solid fa-layer-group text-[#789C91]"></i>
+                        <span>DISCOVER ARCHITECTURE</span>
+                    </a>
+                </div>
+
+                <!-- Micro-Metadata Badges -->
+                <div class="flex flex-wrap items-center gap-5 caption-mono-tech text-[#777F7D] scroll-reveal delay-300">
+                    <span class="flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#72C9A2]"></span>
+                        <span>Matterport3D Environment Runtime</span>
+                    </span>
+                    <span>•</span>
+                    <span>3 Viewport Modalities</span>
+                    <span>•</span>
+                    <span>Zero Teleportation Physics</span>
+                    <span>•</span>
+                    <span class="text-[#B8D96B]">Standard VLN Evaluator</span>
+                </div>
+            </div>
+
+            <!-- Spatial Telemetry HUD (Interactive Floating Panel) -->
+            <div class="hero-telemetry-hud hidden md:block scroll-reveal delay-200">
+                <div class="flex items-center justify-between border-b border-[#394144] pb-2 mb-2.5">
+                    <span class="text-[10px] text-[#A8ADA9] tracking-widest uppercase font-mono">SPATIAL TELEMETRY</span>
+                    <span class="w-2 h-2 rounded-full bg-[#B8D96B] animate-ping"></span>
+                </div>
+                <div class="space-y-1.5 text-xs font-mono">
+                    <div class="flex justify-between items-center">
+                        <span class="text-[#777F7D]">ACTIVE NODE:</span>
+                        <span class="text-[#B8D96B] font-bold">BEDROOM SUITE [VP-03]</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[#777F7D]">COORDINATES:</span>
+                        <span class="text-[#F0EEE7]">X: +2.80m  Z: +2.40m</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[#777F7D]">HEADING:</span>
+                        <span class="text-[#55BFD0]">134.8° POLAR</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[#777F7D]">TRAJECTORY:</span>
+                        <span class="text-[#72C9A2]">VP-03 ➔ VP-02 ➔ VP-04</span>
+                    </div>
+                </div>
+                <div class="mt-2.5 pt-2 border-t border-[#394144] flex items-center justify-between text-[10px] font-mono text-[#777F7D]">
+                    <span>ENGINE: IN-MEMORY GRAPH</span>
+                    <span class="text-[#55BFD0]">60 FPS RUNTIME</span>
+                </div>
+            </div>
+
+            <!-- Scroll Indicator -->
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5 pointer-events-none z-10">
+                <span class="caption-mono-tech text-[10px] text-[#777F7D]">SCROLL</span>
+                <div class="scroll-indicator-line"></div>
+            </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 02: THE CONCEPT (Warm Ivory Editorial Disruption)
+             ================================================================== -->
+        <section id="conceptSection" class="editorial-ivory-wrapper py-24 px-6 md:px-12 relative z-10">
+            <div class="landing-arch-grid" aria-hidden="true"></div>
+            <div class="max-w-[1400px] mx-auto relative z-10">
+                <!-- Section Sub-Header -->
+                <div class="scroll-reveal flex items-center gap-3 caption-mono-tech text-[#575D5F] mb-6">
+                    <span class="w-2 h-2 bg-[#2A483E] rounded-full"></span>
+                    <span>SECTION 02 // COGNITIVE GROUNDING</span>
+                </div>
+
+                <!-- Editorial Title -->
+                <div class="scroll-reveal delay-100 mb-12">
+                    <h2 class="section-editorial-title text-[#141719] mb-2">BRIDGING HUMAN INTENTION</h2>
+                    <p class="section-serif-subtitle text-[#2A483E]">and continuous physical spatial embodiment.</p>
+                </div>
+
+                <!-- Editorial 2-Column Manifesto -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-14 text-[#141719]">
+                    <div class="space-y-4 scroll-reveal delay-150">
+                        <p class="text-base sm:text-lg leading-relaxed font-serif italic text-[#2A483E]">
+                            "Traditional navigation algorithms plan abstract graph routes. Room-Across-Room (RxR) challenges agents to perceive, listen, and physically walk through the continuous visual manifold of human living environments."
+                        </p>
+                        <p class="text-xs sm:text-sm text-[#575D5F] leading-relaxed">
+                            Unlike discrete synthetic datasets, RxR features human-generated, visually grounded navigation demonstrations across residential and commercial topologies. Language becomes a dynamic spatial coordinate system anchored to physical landmarks, doorway portals, and real-world floor plans.
+                        </p>
+                    </div>
+
+                    <div class="space-y-4 scroll-reveal delay-200">
+                        <p class="text-xs sm:text-sm text-[#575D5F] leading-relaxed">
+                            Our studio implements an end-to-end embodied AI engine with zero external framework bloat. Trilingual instruction tokens in English, Hindi, and Telugu are parsed through grammatical postpositional models and mapped directly onto 3D topological waypoint graphs.
+                        </p>
+                        <div class="p-4 rounded-xl bg-[#DFDAD0] border border-[#C8C2B6] font-mono text-xs space-y-1.5 text-[#141719]">
+                            <div class="text-[#2A483E] font-bold">CROSS-MODAL GROUNDING SPECIFICATION:</div>
+                            <div class="text-[11px] text-[#575D5F]">• Syntactic SVO / SOV postpositional dependency parsing</div>
+                            <div class="text-[11px] text-[#575D5F]">• Multi-head cross-attention over Matterport3D visual tokens</div>
+                            <div class="text-[11px] text-[#575D5F]">• 60 FPS continuous physical walking through architectural doorways</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Continuous Trilingual Marquee Stream -->
+                <div class="border-y border-[#C8C2B6] py-3.5 my-10 overflow-hidden scroll-reveal delay-150">
+                    <div class="landing-marquee-container">
+                        <div class="landing-marquee-content">
+                            <span class="caption-mono-tech text-[#2A483E] font-bold">EN: "Start in Bedroom 1, follow the pathway through the hallway, and reach the Kitchen."</span>
+                            <span class="text-[#C8C2B6]">•</span>
+                            <span class="caption-mono-tech text-[#141719] font-bold">HI: "बैठक कक्ष में सोफा के पास से शुरू करें, गलियारे से होते हुए रसोईघर में रुकें।"</span>
+                            <span class="text-[#C8C2B6]">•</span>
+                            <span class="caption-mono-tech text-[#2A483E] font-bold">TE: "బెడ్‌రూమ్ 1 నుండి ప్రారంభించి, హాల్‌వే గుండా కిచెన్‌కు వెళ్ళండి."</span>
+                            <span class="text-[#C8C2B6]">•</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4 Ivory Editorial Metrics -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 scroll-reveal delay-200">
+                    <div class="p-4 rounded-xl border border-[#C8C2B6] bg-[#DFDAD0]/50">
+                        <div class="landing-display-bold text-2xl sm:text-3xl text-[#141719]">3.1M</div>
+                        <div class="caption-mono-tech text-[#575D5F] mt-1">Matterport3D Viewpoints</div>
+                    </div>
+                    <div class="p-4 rounded-xl border border-[#C8C2B6] bg-[#DFDAD0]/50">
+                        <div class="landing-display-bold text-2xl sm:text-3xl text-[#2A483E]">126,000</div>
+                        <div class="caption-mono-tech text-[#575D5F] mt-1">Multilingual Trajectories</div>
+                    </div>
+                    <div class="p-4 rounded-xl border border-[#C8C2B6] bg-[#DFDAD0]/50">
+                        <div class="landing-display-bold text-2xl sm:text-3xl text-[#141719]">3 SCRIPTS</div>
+                        <div class="caption-mono-tech text-[#575D5F] mt-1">Latin • Devanagari • Telugu</div>
+                    </div>
+                    <div class="p-4 rounded-xl border border-[#C8C2B6] bg-[#DFDAD0]/50">
+                        <div class="landing-display-bold text-2xl sm:text-3xl text-[#2A483E]">&lt; 1ms LATENCY</div>
+                        <div class="caption-mono-tech text-[#575D5F] mt-1">Pure In-Memory Graph Engine</div>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Landing Footer -->
-        <footer class="border-t border-[#394144]/60 bg-[#171A1C] px-6 py-8 text-center text-xs text-[#777F7D]">
-            <div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center gap-2 text-[#A8ADA9]">
-                    <i class="fa-solid fa-compass-drafting text-[#B8D96B]"></i>
-                    <span class="font-semibold">RxR Multilingual VLN Agent & Studio</span>
+        <!-- ==================================================================
+             SECTION 03: THE ENVIRONMENT (Spatial Viewport Triad)
+             ================================================================== -->
+        <section id="environmentSection" class="max-w-[1400px] mx-auto px-6 py-24 w-full relative z-10">
+            <div class="scroll-reveal flex items-center gap-3 caption-mono-tech text-[#777F7D] mb-4">
+                <span class="w-2 h-2 bg-[#55BFD0] rounded-full"></span>
+                <span>SECTION 03 // MULTI-VIEWPORT SPATIAL MATRIX</span>
+            </div>
+
+            <div class="scroll-reveal delay-100 mb-10">
+                <h2 class="section-editorial-title text-[#F0EEE7] mb-2">THE SPATIAL VIEWPORT TRIAD</h2>
+                <p class="section-serif-subtitle text-[#55BFD0]">First-person 360° panoramas, 3D dollhouses, and topological graphs.</p>
+            </div>
+
+            <!-- Interactive Spatial Matrix Frame -->
+            <div class="spatial-matrix-frame p-6 sm:p-8 scroll-reveal delay-150">
+                <!-- Mode Switcher Tabs -->
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#394144] pb-4 mb-6">
+                    <div class="flex items-center gap-2">
+                        <button class="matrix-tab-btn active" data-mode="pano">
+                            <i class="fa-solid fa-street-view mr-2"></i>[01 // 360° PANORAMA]
+                        </button>
+                        <button class="matrix-tab-btn" data-mode="dollhouse">
+                            <i class="fa-solid fa-cubes mr-2"></i>[02 // 3D DOLLHOUSE]
+                        </button>
+                        <button class="matrix-tab-btn" data-mode="blueprint">
+                            <i class="fa-solid fa-vector-square mr-2"></i>[03 // 2D BLUEPRINT]
+                        </button>
+                    </div>
+                    <div class="caption-mono-tech text-xs text-[#789C91] bg-[#1A1F21] px-3 py-1.5 rounded-lg border border-[#394144]">
+                        REAL-TIME SYNCED
+                    </div>
                 </div>
-                <div>MIT License • Designed for Embodied AI and Multilingual VLN Research</div>
-                <div class="flex items-center gap-4 text-[#A8ADA9]">
-                    <a href="#viewLanding" class="hover:text-[#F0EEE7]">Back to Top</a>
+
+                <!-- Matrix Visual Panels -->
+                <div class="relative min-h-[380px] rounded-xl overflow-hidden bg-[#121516] border border-[#394144] p-6 flex flex-col justify-between">
+                    <!-- Panel 1: 360° Panorama Showcase -->
+                    <div id="matrixPanelPano" class="space-y-5">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="caption-mono-tech text-xs text-[#55BFD0]">FIRST-PERSON VISUAL GROUNDING</span>
+                                <h3 class="landing-display-bold text-2xl text-[#F0EEE7] mt-1">DUAL-SPHERE EQUIRECTANGULAR PROJECTION</h3>
+                                <p class="text-xs text-[#A8ADA9] max-w-xl mt-1.5 leading-relaxed">
+                                    Simulates real-world Matterport3D panoramic scans with dynamic $2048 \times 1024$ architectural canvas textures, illuminated doorway portal cutouts, and seamless crossfading between viewpoints without visual flickering or black frames.
+                                </p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-[#24292B] border border-[#394144] flex items-center justify-center text-[#55BFD0]">
+                                <i class="fa-solid fa-street-view text-lg"></i>
+                            </div>
+                        </div>
+
+                        <!-- Architectural Panorama Graphic Mock -->
+                        <div class="h-48 w-full rounded-lg bg-gradient-to-r from-[#171A1C] via-[#24292B] to-[#171A1C] border border-[#394144] relative flex items-center justify-center overflow-hidden">
+                            <div class="w-32 h-32 rounded-full border-2 border-dashed border-[#55BFD0]/60 flex items-center justify-center relative">
+                                <div class="w-20 h-20 rounded-full border border-[#B8D96B] flex items-center justify-center">
+                                    <i class="fa-solid fa-compass text-xl text-[#B8D96B]"></i>
+                                </div>
+                                <span class="absolute -top-3 px-2 py-0.5 rounded bg-[#171A1C] border border-[#394144] text-[10px] font-mono text-[#55BFD0]">PORTAL: HALLWAY</span>
+                                <span class="absolute -bottom-3 px-2 py-0.5 rounded bg-[#171A1C] border border-[#394144] text-[10px] font-mono text-[#B8D96B]">NADIR EMBLEM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 2: 3D Dollhouse Showcase -->
+                    <div id="matrixPanelDollhouse" class="space-y-5 hidden">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="caption-mono-tech text-xs text-[#B8D96B]">ORBITAL 3D ENVIRONMENT</span>
+                                <h3 class="landing-display-bold text-2xl text-[#F0EEE7] mt-1">PARAMETRIC WALL CUTOUTS & AGENT WALKING</h3>
+                                <p class="text-xs text-[#A8ADA9] max-w-xl mt-1.5 leading-relaxed">
+                                    Full spatial visibility into residential topology. Orbit controls, semi-transparent walls, 4-stage doorway traversal (approach, threshold, exit, target), and real-time avatar trajectory tube rendering.
+                                </p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-[#24292B] border border-[#394144] flex items-center justify-center text-[#B8D96B]">
+                                <i class="fa-solid fa-cubes text-lg"></i>
+                            </div>
+                        </div>
+
+                        <div class="h-48 w-full rounded-lg bg-gradient-to-r from-[#171A1C] via-[#24292B] to-[#171A1C] border border-[#394144] relative flex items-center justify-center overflow-hidden">
+                            <div class="flex items-center gap-6 z-10 font-mono text-xs">
+                                <div class="p-2.5 bg-[#171A1C] border border-[#394144] rounded-lg text-center">
+                                    <div class="text-[#B8D96B] font-bold">BEDROOM 1</div>
+                                    <div class="text-[10px] text-[#777F7D]">vp_1 (Start)</div>
+                                </div>
+                                <div class="text-[#55BFD0] font-bold">── DOORWAY 1 ──➔</div>
+                                <div class="p-2.5 bg-[#171A1C] border border-[#394144] rounded-lg text-center">
+                                    <div class="text-[#55BFD0] font-bold">HALLWAY</div>
+                                    <div class="text-[10px] text-[#777F7D]">vp_2 (Corridor)</div>
+                                </div>
+                                <div class="text-[#E5AD69] font-bold">── DOORWAY 2 ──➔</div>
+                                <div class="p-2.5 bg-[#171A1C] border border-[#394144] rounded-lg text-center">
+                                    <div class="text-[#E5AD69] font-bold">KITCHEN</div>
+                                    <div class="text-[10px] text-[#777F7D]">vp_3 (Goal)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel 3: 2D Blueprint Showcase -->
+                    <div id="matrixPanelBlueprint" class="space-y-5 hidden">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="caption-mono-tech text-xs text-[#789C91]">TOPOLOGICAL GRAPH BLUEPRINT</span>
+                                <h3 class="landing-display-bold text-2xl text-[#F0EEE7] mt-1">INTERACTIVE 2D CAD MAP & ROUTE PLANNER</h3>
+                                <p class="text-xs text-[#A8ADA9] max-w-xl mt-1.5 leading-relaxed">
+                                    Precision room geometry drawing, viewpoint placement, automated topological edge linking heuristics, and Dijkstra shortest-path planning synchronized via REST API.
+                                </p>
+                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-[#24292B] border border-[#394144] flex items-center justify-center text-[#789C91]">
+                                <i class="fa-solid fa-vector-square text-lg"></i>
+                            </div>
+                        </div>
+
+                        <div class="h-48 w-full rounded-lg bg-[#14181A] border border-[#394144] relative flex items-center justify-center overflow-hidden">
+                            <div class="relative z-10 flex items-center gap-8 font-mono text-xs">
+                                <span class="px-2.5 py-1 rounded bg-[#1E2325] border border-[#55BFD0] text-[#55BFD0]">Node vp_1</span>
+                                <span class="text-[#789C91]">════ (2.4m) ════</span>
+                                <span class="px-2.5 py-1 rounded bg-[#1E2325] border border-[#B8D96B] text-[#B8D96B]">Node vp_2</span>
+                                <span class="text-[#789C91]">════ (3.1m) ════</span>
+                                <span class="px-2.5 py-1 rounded bg-[#1E2325] border border-[#E5AD69] text-[#E5AD69]">Node vp_3</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Matrix Telemetry Status Bar -->
+                    <div class="mt-4 pt-3.5 border-t border-[#394144] flex flex-wrap items-center justify-between gap-4 caption-mono-tech text-xs text-[#A8ADA9]">
+                        <div class="flex items-center gap-4">
+                            <span>FOV: <strong id="matrixTelemetryFov" class="text-[#F0EEE7]">75.0° DUAL-SPHERE</strong></span>
+                            <span>•</span>
+                            <span>MODE: <strong id="matrixTelemetryMode" class="text-[#55BFD0]">FIRST-PERSON 360° EQUIRECTANGULAR</strong></span>
+                        </div>
+                        <div>
+                            <span>TOPOLOGY: <strong id="matrixTelemetryPortals" class="text-[#B8D96B]">2 ACTIVE DOORWAYS</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 04: HOW IT WORKS (The Embodied Reasoning Loop)
+             ================================================================== -->
+        <section id="workflowSection" class="max-w-[1400px] mx-auto px-6 py-24 w-full border-t border-[#394144]/60 relative z-10">
+            <div class="scroll-reveal flex items-center gap-3 caption-mono-tech text-[#777F7D] mb-4">
+                <span class="w-2 h-2 bg-[#B8D96B] rounded-full"></span>
+                <span>SECTION 04 // EMBODIED PIPELINE</span>
+            </div>
+
+            <div class="scroll-reveal delay-100 mb-12">
+                <h2 class="section-editorial-title text-[#F0EEE7] mb-2">THE 5-STAGE NAVIGATION PIPELINE</h2>
+                <p class="section-serif-subtitle text-[#B8D96B]">From multilingual natural language tokens to continuous physical traversal.</p>
+            </div>
+
+            <!-- Staged Workflow Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Step 01 -->
+                <div class="workflow-step-card scroll-reveal delay-100">
+                    <span class="step-watermark-number">01</span>
+                    <div class="caption-mono-tech text-xs text-[#55BFD0] mb-2">STAGE 01 // SYNTHESIS</div>
+                    <h3 class="landing-display-semibold text-xl text-[#F0EEE7] mb-2">ENVIRONMENT & GRAPH SYNTHESIS</h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-4">
+                        Construct room boundaries, assign spatial color themes, place viewpoint nodes, and generate topological navigation edges through physical doorways.
+                    </p>
+                    <div class="caption-mono-tech text-[11px] text-[#789C91] bg-[#121516] p-2.5 rounded border border-[#394144]">
+                        REST: POST /api/save-map
+                    </div>
+                </div>
+
+                <!-- Step 02 -->
+                <div class="workflow-step-card scroll-reveal delay-150">
+                    <span class="step-watermark-number">02</span>
+                    <div class="caption-mono-tech text-xs text-[#B8D96B] mb-2">STAGE 02 // PARSING</div>
+                    <h3 class="landing-display-semibold text-xl text-[#F0EEE7] mb-2">TRILINGUAL INSTRUCTION PARSING</h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-4">
+                        Process navigation instructions across English, Hindi, and Telugu. Automatically extract start rooms, intermediate pathways, and goal destinations.
+                    </p>
+                    <div class="caption-mono-tech text-[11px] text-[#B8D96B] bg-[#121516] p-2.5 rounded border border-[#394144]">
+                        NLP: EN • HI (पोस्टपोज़ीशन) • TE
+                    </div>
+                </div>
+
+                <!-- Step 03 -->
+                <div class="workflow-step-card scroll-reveal delay-200">
+                    <span class="step-watermark-number">03</span>
+                    <div class="caption-mono-tech text-xs text-[#E5AD69] mb-2">STAGE 03 // TRAVERSAL</div>
+                    <h3 class="landing-display-semibold text-xl text-[#F0EEE7] mb-2">CONSTRAINED DIJKSTRA PATHFINDING</h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-4">
+                        Determine optimal geometric trajectories between viewpoints while satisfying mandatory doorway threshold sequences and obstacle clearance.
+                    </p>
+                    <div class="caption-mono-tech text-[11px] text-[#E5AD69] bg-[#121516] p-2.5 rounded border border-[#394144]">
+                        REST: POST /api/plan-path
+                    </div>
+                </div>
+
+                <!-- Step 04 -->
+                <div class="workflow-step-card scroll-reveal delay-250">
+                    <span class="step-watermark-number">04</span>
+                    <div class="caption-mono-tech text-xs text-[#72C9A2] mb-2">STAGE 04 // EMBODIMENT</div>
+                    <h3 class="landing-display-semibold text-xl text-[#F0EEE7] mb-2">CONTINUOUS PHYSICAL EMBODIMENT</h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-4">
+                        The AI agent walks at configurable pace (0.4x - 2.5x), smooths yaw orientation, steps through open doorway cutouts, and animates 3D trajectory tubes.
+                    </p>
+                    <div class="caption-mono-tech text-[11px] text-[#72C9A2] bg-[#121516] p-2.5 rounded border border-[#394144]">
+                        60 FPS Delta Locomotion
+                    </div>
+                </div>
+
+                <!-- Step 05 -->
+                <div class="workflow-step-card md:col-span-2 lg:col-span-2 scroll-reveal delay-300">
+                    <span class="step-watermark-number">05</span>
+                    <div class="caption-mono-tech text-xs text-[#55BFD0] mb-2">STAGE 05 // BENCHMARKING</div>
+                    <h3 class="landing-display-semibold text-xl text-[#F0EEE7] mb-2">EMBODIED VLN METRIC COMPUTATION</h3>
+                    <p class="text-xs text-[#A8ADA9] leading-relaxed mb-4">
+                        Compute official Vision-and-Language Navigation benchmarks: Success Rate (SR), Success weighted by Path Length (SPL), Navigation Error (NE), and Dynamic Time Warping (nDTW).
+                    </p>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 caption-mono-tech text-xs">
+                        <div class="p-2.5 bg-[#121516] rounded border border-[#394144] text-center">
+                            <div class="text-[#72C9A2] font-bold">SR: 100%</div>
+                            <div class="text-[10px] text-[#777F7D]">Goal Reached</div>
+                        </div>
+                        <div class="p-2.5 bg-[#121516] rounded border border-[#394144] text-center">
+                            <div class="text-[#55BFD0] font-bold">SPL: 1.00</div>
+                            <div class="text-[10px] text-[#777F7D]">Path Optimal</div>
+                        </div>
+                        <div class="p-2.5 bg-[#121516] rounded border border-[#394144] text-center">
+                            <div class="text-[#B8D96B] font-bold">NE: 0.00m</div>
+                            <div class="text-[10px] text-[#777F7D]">Zero Error</div>
+                        </div>
+                        <div class="p-2.5 bg-[#121516] rounded border border-[#394144] text-center">
+                            <div class="text-[#E5AD69] font-bold">PL: 14.8m</div>
+                            <div class="text-[10px] text-[#777F7D]">Length Walked</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 05: MULTIMODAL INTELLIGENCE (Research Specifications)
+             ================================================================== -->
+        <section id="intelligenceSection" class="max-w-[1400px] mx-auto px-6 py-24 w-full border-t border-[#394144]/60 relative z-10">
+            <div class="scroll-reveal flex items-center gap-3 caption-mono-tech text-[#777F7D] mb-4">
+                <span class="w-2 h-2 bg-[#E5AD69] rounded-full"></span>
+                <span>SECTION 05 // MODEL INTELLIGENCE</span>
+            </div>
+
+            <div class="scroll-reveal delay-100 mb-12">
+                <h2 class="section-editorial-title text-[#F0EEE7] mb-2">CROSS-MODAL TOKEN ATTENTION</h2>
+                <p class="section-serif-subtitle text-[#E5AD69]">Interactive visualization of linguistic grounding into 3D spatial space.</p>
+            </div>
+
+            <!-- Token Attention Interactive Playground -->
+            <div class="bg-[#171A1C] border border-[#394144] rounded-2xl p-6 sm:p-8 mb-10 shadow-2xl scroll-reveal delay-150">
+                <div class="text-xs caption-mono-tech text-[#A8ADA9] mb-4">
+                    CLICK LINGUISTIC TOKENS TO INSPECT SPATIAL GROUNDING & ATTENTION WEIGHTS ($\alpha_{t,i}$):
+                </div>
+
+                <!-- Interactive Token Chips -->
+                <div class="flex flex-wrap items-center gap-2 mb-6">
+                    <button class="token-interactive-chip active" data-token="Bedroom 1">
+                        <span>[Bedroom 1]</span>
+                        <i class="fa-solid fa-crosshairs text-[10px]"></i>
+                    </button>
+                    <button class="token-interactive-chip" data-token="pathway">
+                        <span>[pathway]</span>
+                    </button>
+                    <button class="token-interactive-chip" data-token="hallway">
+                        <span>[hallway]</span>
+                        <i class="fa-solid fa-crosshairs text-[10px]"></i>
+                    </button>
+                    <button class="token-interactive-chip" data-token="reach">
+                        <span>[reach]</span>
+                    </button>
+                    <button class="token-interactive-chip" data-token="Kitchen">
+                        <span>[Kitchen]</span>
+                        <i class="fa-solid fa-flag-checkered text-[10px]"></i>
+                    </button>
+                </div>
+
+                <!-- Attention Weight Telemetry Bar -->
+                <div class="p-4 rounded-xl bg-[#121516] border border-[#394144] mb-6 space-y-2.5">
+                    <div class="flex items-center justify-between text-xs font-mono">
+                        <span class="text-[#A8ADA9]">ATTENTION WEIGHT:</span>
+                        <span id="tokenAttentionScore" class="text-[#B8D96B] font-bold">α = 0.94</span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-[#24292B] overflow-hidden">
+                        <div id="tokenAttentionFill" class="token-bar-fill h-full bg-[#B8D96B] w-[94%]"></div>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] font-mono text-[#777F7D]">
+                        <span>GROUNDED 3D ENTITY: <strong id="tokenGroundedRoom" class="text-[#55BFD0]">Bedroom 1 (Start Viewpoint vp_1)</strong></span>
+                        <span>NORMALIZED SOFTMAX</span>
+                    </div>
+                </div>
+
+                <!-- Trilingual Alignment Matrix -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                    <div class="p-3.5 rounded-xl bg-[#1A1F21] border border-[#394144]">
+                        <div class="text-[#72C9A2] text-[11px] mb-1 font-bold">DEVANAGARI (HINDI) EQUIVALENT:</div>
+                        <div id="tokenDevanagariEquiv" class="text-sm text-[#F0EEE7]">शयनकक्ष 1 (स्थान)</div>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-[#1A1F21] border border-[#394144]">
+                        <div class="text-[#E5AD69] text-[11px] mb-1 font-bold">TELUGU EQUIVALENT:</div>
+                        <div id="tokenTeluguEquiv" class="text-sm text-[#F0EEE7]">బెడ్‌రూమ్ 1 (ప్రారంభం)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================================================================
+             SECTION 06: ENTER THE STUDIO (The Monolithic Finale)
+             ================================================================== -->
+        <section class="max-w-[1400px] mx-auto px-6 py-24 w-full relative z-10">
+            <div class="rounded-3xl bg-gradient-to-b from-[#1E2325] to-[#121516] border border-[#394144] p-8 sm:p-14 text-center relative overflow-hidden shadow-2xl scroll-reveal">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#24292B] border border-[#394144] caption-mono-tech text-[#B8D96B] mb-5">
+                    <span class="w-2 h-2 rounded-full bg-[#B8D96B] animate-ping"></span>
+                    <span>SYSTEM READY // BACKEND ONLINE</span>
+                </div>
+
+                <h2 class="section-editorial-title text-[#F0EEE7] mb-3">
+                    ENTER THE EMBODIED STUDIO
+                </h2>
+
+                <p class="section-serif-subtitle text-[#A8ADA9] max-w-2xl mx-auto mb-8">
+                    Construct environments, run multilingual navigation models, and inspect 3D continuous agent movement.
+                </p>
+
+                <div class="flex flex-wrap items-center justify-center gap-3.5 mb-10">
+                    <button onclick="AuthManager.navigateTo('studio')" class="magnetic-btn magnetic-btn-primary py-3.5 px-8 rounded-xl text-sm font-bold flex items-center gap-3 transition shadow-lg">
+                        <i class="fa-solid fa-cube text-base"></i>
+                        <span>LAUNCH STUDIO WORKSPACE</span>
+                        <i class="fa-solid fa-arrow-right cta-arrow"></i>
+                    </button>
+                    <button onclick="AuthManager.navigateTo('login')" class="magnetic-btn magnetic-btn-secondary py-3.5 px-8 rounded-xl text-sm font-semibold transition">
+                        Sign In / Register Account
+                    </button>
+                </div>
+
+                <!-- Diagnostic Terminal Readout -->
+                <div class="max-w-xl mx-auto bg-[#121516] border border-[#394144] rounded-xl p-3.5 text-left font-mono text-[11px] text-[#777F7D] space-y-1">
+                    <div class="flex items-center justify-between text-[#55BFD0]">
+                        <span>[CORE ENGINE: MATTERPORT3D EMBODIED V2.4]</span>
+                        <span>[LATENCY: 1.2ms]</span>
+                    </div>
+                    <div>[MODELS: RXR-M-BERT + ATTENTION + DIJKSTRA GRAPH PLANNER]</div>
+                    <div class="text-[#72C9A2]">[SECURITY: PBKDF2-SHA512 SESSION ISOLATED]</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================================================================
+             LANDING FOOTER
+             ================================================================== -->
+        <footer class="border-t border-[#394144]/60 bg-[#121516] px-6 py-8 text-xs text-[#777F7D] relative z-10">
+            <div class="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-5">
+                <div class="flex items-center gap-3 text-[#A8ADA9]">
+                    <div class="w-7 h-7 rounded bg-[#1E2325] border border-[#394144] flex items-center justify-center text-[#B8D96B]">
+                        <i class="fa-solid fa-compass-drafting text-xs"></i>
+                    </div>
+                    <span class="landing-display-semibold text-base tracking-tight text-[#F0EEE7]">RxR Multilingual VLN Studio</span>
+                    <span class="caption-mono-tech text-[10px] text-[#789C91]">v2.4.0</span>
+                </div>
+
+                <div class="caption-mono-tech text-center sm:text-left">
+                    MIT LICENSE • BUILT FOR EMBODIED SPATIAL AI RESEARCH
+                </div>
+
+                <div class="flex items-center gap-6 caption-mono-tech text-[#A8ADA9]">
+                    <a href="#viewLanding" class="hover:text-[#F0EEE7] transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-up text-[10px]"></i>
+                        <span>TOP</span>
+                    </a>
                     <span>•</span>
-                    <button onclick="AuthManager.navigateTo('studio')" class="hover:text-[#B8D96B]">Studio Workspace</button>
+                    <button onclick="AuthManager.navigateTo('studio')" class="hover:text-[#B8D96B] transition">
+                        WORKSPACE
+                    </button>
+                    <span>•</span>
+                    <button onclick="AuthManager.navigateTo('login')" class="hover:text-[#55BFD0] transition">
+                        RESEARCHER AUTH
+                    </button>
+                </div>
+            </div>
+        </footer>
+    </div>
+                        RESEARCHER AUTH
+                    </button>
                 </div>
             </div>
         </footer>
@@ -1422,5 +1608,6 @@
     <!-- Application Modules -->
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
+    <script src="js/landing.js"></script>
 </body>
 </html>
